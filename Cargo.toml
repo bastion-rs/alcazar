@@ -25,3 +25,5 @@ travis-ci = { repository = "bastion-rs/alcazar", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [dependencies]
+# Log crates
+tracing = "0.1.15"
