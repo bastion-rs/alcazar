@@ -1,14 +1,12 @@
 pub struct Alcazar {
-    url: String
+    url: String,
 }
 
 impl Alcazar {
     pub fn new() -> Self {
         let url = String::default();
 
-        Alcazar{
-            url
-        }
+        Alcazar { url }
     }
 
     pub fn with_url(mut self, url: impl Into<String>) -> Self {
