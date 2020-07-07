@@ -25,10 +25,8 @@ impl Alcazar {
         match listener.accept() {
             Ok((client, addr)) => {
                 debug!("Client connected from: {}", addr);
-            },
-            Err(_) => {
-                debug!("Client connexion failed.")
-            },
+            }
+            Err(_) => debug!("Client connexion failed."),
         }
     }
 }
@@ -36,7 +34,7 @@ impl Alcazar {
 #[cfg(test)]
 mod tests {
     use super::Alcazar;
-    use std::{thread, net::TcpStream};
+    use std::{net::TcpStream, thread};
 
     #[test]
     fn add_url() {
@@ -55,10 +53,10 @@ mod tests {
         match TcpStream::connect("127.0.0.1:9000") {
             Ok(_) => {
                 assert!(true);
-            },
+            }
             Err(_) => {
                 assert!(false);
-            },
+            }
         }
     }
 }
