@@ -22,11 +22,13 @@ impl Alcazar {
         let listener = TcpListener::bind(&self.url).unwrap();
 
         debug!("Alcazar: Start listening on: {}", &self.url);
-        match listener.accept() {
-            Ok((client, addr)) => {
-                debug!("Client connected from: {}", addr);
+        loop {
+            match listener.accept() {
+                Ok((client, addr)) => {
+                    debug!("Client connected from: {}", addr);
+                }
+                Err(_) => debug!("Client connexion failed."),
             }
-            Err(_) => debug!("Client connexion failed."),
         }
     }
 }
