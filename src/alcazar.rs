@@ -1,4 +1,4 @@
-use std::net::TcpListener;
+use std::{io::{BufRead, BufReader}, net::{TcpStream, TcpListener}};
 
 use tracing::debug;
 
@@ -25,10 +25,19 @@ impl Alcazar {
         loop {
             match listener.accept() {
                 Ok((client, addr)) => {
+                    Alcazar::parse(client);
                     debug!("Client connected from: {}", addr);
                 }
                 Err(_) => debug!("Client connexion failed."),
             }
+        }
+    }
+
+    pub fn parse(stream: TcpStream) {
+        let buffer = BufReader::new(stream);
+
+        for line in buffer.lines() {
+            println!("{}", line.unwrap());
         }
     }
 }
@@ -36,7 +45,14 @@ impl Alcazar {
 #[cfg(test)]
 mod tests {
     use super::Alcazar;
-    use std::{net::TcpStream, thread};
+    use std::{net::TcpStream, thread, io::Write};
+
+    fn create_alcazar() {
+        let app = Alcazar::new().with_url("127.0.0.1:9000");
+        thread::spawn(move || {
+            app.start();
+        });
+    }
 
     #[test]
     fn add_url() {
@@ -47,14 +63,28 @@ mod tests {
 
     #[test]
     fn try_to_connect() {
-        let app = Alcazar::new().with_url("127.0.0.1:9000");
-        thread::spawn(move || {
-            app.start();
-        });
+        create_alcazar();
 
         match TcpStream::connect("127.0.0.1:9000") {
             Ok(_) => {
                 assert!(true);
+            }
+            Err(_) => {
+                assert!(false);
+            }
+        }
+    }
+
+    #[test]
+    fn send_hello_world() {
+        create_alcazar();
+
+        let stream = TcpStream::connect("127.0.0.1:9000");
+
+        match stream {
+            Ok(mut s) => {
+                s.write("hello, world!".as_bytes()).unwrap();
+                s.flush().unwrap();
             }
             Err(_) => {
                 assert!(false);
