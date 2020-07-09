@@ -1,4 +1,7 @@
-use std::{io::{BufRead, BufReader}, net::{TcpListener, SocketAddr, IpAddr, Ipv4Addr}};
+use std::{
+    io::{BufRead, BufReader},
+    net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener},
+};
 use tracing::info;
 
 pub struct Alcazar {
@@ -7,7 +10,9 @@ pub struct Alcazar {
 
 impl Alcazar {
     pub fn new() -> Self {
-        Alcazar { url: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080) }
+        Alcazar {
+            url: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080),
+        }
     }
 
     pub fn with_url(mut self, url: impl Into<SocketAddr>) -> Self {
@@ -38,14 +43,17 @@ impl Alcazar {
 #[cfg(test)]
 mod tests {
     use super::Alcazar;
-    use std::{net::{SocketAddr, TcpStream, IpAddr, Ipv4Addr, Ipv6Addr}, thread};
+    use std::{
+        net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream},
+        thread,
+    };
 
     fn get_ipv4_socket_addr() -> SocketAddr {
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080)
     }
 
     fn get_ipv6_socket_addr() -> SocketAddr {
-        SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0,0,0,0,0,0,0,1)), 8080)
+        SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)), 8080)
     }
 
     fn create_app(url: SocketAddr) {
