@@ -1,7 +1,5 @@
-use std::{
-    io::{BufRead, BufReader},
-    net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener},
-};
+use crate::http_request::HttpRequest;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 use tracing::info;
 
 pub struct Alcazar {
@@ -27,11 +25,7 @@ impl Alcazar {
         loop {
             match listener.accept() {
                 Ok((stream, addr)) => {
-                    let buffer = BufReader::new(stream);
-
-                    for line in buffer.lines() {
-                        println!("{}", line.unwrap());
-                    }
+                    HttpRequest::parse_stream(stream);
                     info!("Client connected from: {}", addr);
                 }
                 Err(_) => info!("Client connexion failed."),
