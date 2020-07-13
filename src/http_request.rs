@@ -1,17 +1,6 @@
 use httparse::{Request, EMPTY_HEADER};
 use std::{io::Read, net::TcpStream};
 
-pub enum MethodType {
-    POST,
-    GET,
-    PATCH,
-    DELETE,
-    CONNECT,
-    OPTIONS,
-    TRACE,
-    HEAD,
-}
-
 pub struct HttpRequest {}
 
 impl HttpRequest {
