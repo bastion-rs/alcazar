@@ -1,7 +1,5 @@
-use std::{
-    io::{BufRead, BufReader},
-    net::TcpStream,
-};
+use httparse::{Request, EMPTY_HEADER};
+use std::{io::Read, net::TcpStream};
 
 pub enum MethodType {
     POST,
@@ -17,24 +15,14 @@ pub enum MethodType {
 pub struct HttpRequest {}
 
 impl HttpRequest {
-    pub fn parse_stream(stream: TcpStream) {
-        let buffer = BufReader::new(stream);
+    pub fn parse_stream(mut stream: TcpStream) {
+        let mut headers = [EMPTY_HEADER; 0];
+        let mut req = Request::new(&mut headers[..]);
 
-        for line in buffer.lines() {
-            let line = line.unwrap();
-            let sublines: Vec<&str> = line.split(' ').collect();
+        let mut buffer = Vec::new();
+        stream.read_to_end(&mut buffer).unwrap();
 
-            let method = match sublines[0] {
-                "POST" => MethodType::POST,
-                "GET" => MethodType::GET,
-                "PATCH" => MethodType::PATCH,
-                "DELETE" => MethodType::DELETE,
-                "CONNECT" => MethodType::CONNECT,
-                "OPTIONS" => MethodType::OPTIONS,
-                "TRACE" => MethodType::TRACE,
-                "HEAD" => MethodType::HEAD,
-                _ => panic!("TODO: handle error"),
-            };
-        }
+        req.parse(buffer.as_ref());
+        println!("{:?}", req);
     }
 }
