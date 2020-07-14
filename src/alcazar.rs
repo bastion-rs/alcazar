@@ -41,12 +41,12 @@ mod tests {
         thread,
     };
 
-    fn get_ipv4_socket_addr() -> SocketAddr {
-        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080)
+    fn get_ipv4_socket_addr(port: u16) -> SocketAddr {
+        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port)
     }
 
-    fn get_ipv6_socket_addr() -> SocketAddr {
-        SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)), 8080)
+    fn get_ipv6_socket_addr(port: u16) -> SocketAddr {
+        SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)), port)
     }
 
     fn create_app(url: SocketAddr) {
@@ -58,26 +58,26 @@ mod tests {
 
     #[test]
     fn add_url_ipv4() {
-        let app = Alcazar::new().with_url(get_ipv4_socket_addr());
-        assert!(app.url == get_ipv4_socket_addr());
+        let app = Alcazar::new().with_url(get_ipv4_socket_addr(1337));
+        assert!(app.url == get_ipv4_socket_addr(1337));
     }
 
     #[test]
     fn add_url_ipv6() {
-        let app = Alcazar::new().with_url(get_ipv6_socket_addr());
-        assert!(app.url == get_ipv6_socket_addr());
+        let app = Alcazar::new().with_url(get_ipv6_socket_addr(1338));
+        assert!(app.url == get_ipv6_socket_addr(1338));
     }
 
     #[test]
     fn try_to_connect_ipv4() {
-        create_app(get_ipv4_socket_addr());
+        create_app(get_ipv4_socket_addr(1339));
 
         assert!(TcpStream::connect("127.0.0.1:8080").is_ok())
     }
 
     #[test]
     fn try_to_connect_ipv6() {
-        create_app(get_ipv6_socket_addr());
+        create_app(get_ipv6_socket_addr(1340));
 
         assert!(TcpStream::connect("[::1]:8080").is_ok())
     }
