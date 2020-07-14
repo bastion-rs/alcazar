@@ -3,10 +3,11 @@ use std::{
     io::{BufRead, BufReader, Write},
     net::TcpStream,
 };
+use tracing::info;
 
 pub struct HttpRequest {}
 
-// https://users.rust-lang.org/t/curl-post-tcpstream/38350/3
+// See https://users.rust-lang.org/t/curl-post-tcpstream/38350/3 for understand how to handle a TcpStream as HttpRequest
 impl HttpRequest {
     pub fn parse_stream(mut stream: TcpStream) {
         // Creating the reader and the buffer for read the stream
@@ -16,16 +17,16 @@ impl HttpRequest {
         loop {
             match reader.read_line(&mut buffer) {
                 Ok(0) => {
-                    println!("TcpStream -> EOF means the connection was terminated.");
+                    info!("TcpStream -> EOF means the connection was terminated.");
                     break;
                 }
                 Ok(_n) => {
                     if buffer.ends_with("\r\n\r\n") {
-                        println!("HttpRequest -> \\r\\n alone means end of request.");
+                        info!("HttpRequest -> \\r\\n alone means end of request.");
                         break;
                     }
                 }
-                _ => (),
+                Err(error) => info!("An error occured during request parsing: {}", error),
             }
         }
         // Create headers for parse the request with the crate Httparse
@@ -35,16 +36,21 @@ impl HttpRequest {
         let request_status = request.parse(buffer.as_ref()).unwrap();
         // If the request is complete we are returning the response in the stream
         if request_status.is_complete() {
+            info!("Request is complete.");
             match request.path {
                 Some(ref _path) => {
+                    info!("Request path is: {}", _path);
                     let response = "HTTP/1.1 200 OK\r\n\r\n";
                     stream.write(response.as_bytes()).unwrap();
                     stream.flush().unwrap();
                 }
                 None => {
-                    println!("You get bonkerized.");
+                    info!("Request path is missing.");
                 }
             }
+        } else {
+            // TODO: Determine what to do if request is not complete
+            info!("Request is partial.");
         }
     }
 }
