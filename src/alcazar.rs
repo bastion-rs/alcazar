@@ -72,13 +72,13 @@ mod tests {
     fn try_to_connect_ipv4() {
         create_app(get_ipv4_socket_addr(1339));
 
-        assert!(TcpStream::connect("127.0.0.1:8080").is_ok())
+        assert!(TcpStream::connect("127.0.0.1:1339").is_ok())
     }
 
     #[test]
     fn try_to_connect_ipv6() {
-        create_app(get_ipv6_socket_addr(1341));
+        create_app(get_ipv6_socket_addr(1340));
 
-        assert!(TcpStream::connect("[::1]:8080").is_ok())
+        assert!(TcpStream::connect("[::1]:1340").is_ok())
     }
 }
