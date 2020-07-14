@@ -1,8 +1,5 @@
 use crate::http_request::HttpRequest;
-use std::{
-    net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener},
-    thread,
-};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 use tracing::info;
 
 pub struct Alcazar {
