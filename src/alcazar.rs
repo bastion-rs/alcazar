@@ -47,22 +47,19 @@ mod tests {
     use super::*;
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream};
 
-    fn get_ipv4_socket_addr(port: Option<u16>) -> SocketAddr {
-        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port.unwrap_or(0))
+    fn get_ipv4_socket_addr() -> SocketAddr {
+        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0)
     }
 
-    fn get_ipv6_socket_addr(port: Option<u16>) -> SocketAddr {
-        SocketAddr::new(
-            IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)),
-            port.unwrap_or(0),
-        )
+    fn get_ipv6_socket_addr() -> SocketAddr {
+        SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)), 0)
     }
 
     #[test]
     fn add_url_ipv4() {
-        let socket_addr = get_ipv4_socket_addr(None);
-
-        let alcazar = AlcazarBuilder::default().set_addr(socket_addr).start();
+        let alcazar = AlcazarBuilder::default()
+            .set_addr(get_ipv4_socket_addr())
+            .start();
 
         assert_eq!(
             "127.0.0.1".parse::<IpAddr>().unwrap(),
@@ -72,32 +69,28 @@ mod tests {
 
     #[test]
     fn add_url_ipv6() {
-        let socket_addr = get_ipv6_socket_addr(None);
-
-        let alcazar = AlcazarBuilder::default().set_addr(socket_addr).start();
+        let alcazar = AlcazarBuilder::default()
+            .set_addr(get_ipv6_socket_addr())
+            .start();
 
         assert_eq!("::1".parse::<IpAddr>().unwrap(), alcazar.local_addr().ip());
     }
 
     #[test]
     fn try_to_connect_ipv4() {
-        let socket_addr = get_ipv4_socket_addr(None);
+        let alcazar = AlcazarBuilder::default()
+            .set_addr(get_ipv4_socket_addr())
+            .start();
 
-        let alcazar = AlcazarBuilder::default().set_addr(socket_addr).start();
-
-        let socket_to_connect_to = alcazar.local_addr();
-
-        TcpStream::connect(socket_to_connect_to).unwrap();
+        TcpStream::connect(alcazar.local_addr()).unwrap();
     }
 
     #[test]
     fn try_to_connect_ipv6() {
-        let socket_addr = get_ipv6_socket_addr(None);
+        let alcazar = AlcazarBuilder::default()
+            .set_addr(get_ipv6_socket_addr())
+            .start();
 
-        let alcazar = AlcazarBuilder::default().set_addr(socket_addr).start();
-
-        let socket_to_connect_to = alcazar.local_addr();
-
-        TcpStream::connect(socket_to_connect_to).unwrap();
+        TcpStream::connect(alcazar.local_addr()).unwrap();
     }
 }
