@@ -1,5 +1,8 @@
 use crate::http_request::HttpRequest;
-use std::net::{SocketAddr, TcpListener};
+use std::{
+    io::Write,
+    net::{SocketAddr, TcpListener},
+};
 use tracing::info;
 
 #[derive(Default)]
@@ -21,8 +24,15 @@ impl AlcazarBuilder {
         info!("listening to {}", local_addr);
         std::thread::spawn(move || loop {
             match listener.accept() {
-                Ok((stream, _addr)) => {
-                    HttpRequest::parse_stream(stream);
+                Ok((mut stream, _addr)) => {
+                    // TODO: Stop to unwrap the world, set up a error handler
+                    let http_request = HttpRequest::parse_stream(&stream).unwrap();
+                    http_request.path();
+                    http_request.method();
+                    // TODO: Router and middleware process, early return here for complete response
+                    let response = "HTTP/1.1 200 OK\r\n\r\n";
+                    stream.write_all(response.as_bytes()).unwrap();
+                    stream.flush().unwrap();
                 }
                 Err(_) => info!("Client connexion failed."),
             }

@@ -1,17 +1,20 @@
 use httparse::{Request, EMPTY_HEADER};
 use std::{
-    io::{BufRead, BufReader, Write},
+    io::{BufRead, BufReader},
     net::TcpStream,
 };
 use tracing::info;
 
-pub struct HttpRequest {}
+pub struct HttpRequest {
+    path: Option<String>,
+    method: Option<String>,
+}
 
 // See https://users.rust-lang.org/t/curl-post-tcpstream/38350/3 for understand how to handle a TcpStream as HttpRequest
 impl HttpRequest {
-    pub fn parse_stream(mut stream: TcpStream) {
+    pub fn parse_stream(stream: &TcpStream) -> Option<HttpRequest> {
         // Creating the reader and the buffer for read the stream
-        let mut reader = BufReader::new(&stream);
+        let mut reader = BufReader::new(stream);
         let mut buffer = String::new();
         // Read the stream line by line and add it to the buffer
         loop {
@@ -37,21 +40,22 @@ impl HttpRequest {
         // If the request is complete we are returning the response in the stream
         if request_status.is_complete() {
             info!("Request is complete.");
-            match request.path {
-                Some(ref _path) => {
-                    info!("Request path is: {}", _path);
-                    let response = "HTTP/1.1 200 OK\r\n\r\n";
-                    stream.write_all(response.as_bytes()).unwrap();
-                    stream.flush().unwrap();
-                }
-                None => {
-                    info!("Request path is missing.");
-                }
-            }
+            let path = request.path.map(String::from);
+            let method = request.method.map(String::from);
+            Some(HttpRequest { path, method })
         } else {
             // TODO: Determine what to do if request is not complete
             info!("Request is partial.");
+            None
         }
+    }
+
+    pub fn path(&self) -> &Option<String> {
+        &self.path
+    }
+
+    pub fn method(&self) -> &Option<String> {
+        &self.method
     }
 }
 
