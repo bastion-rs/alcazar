@@ -25,11 +25,13 @@ impl Alcazar {
         let listener = TcpListener::bind(&self.url).unwrap();
 
         info!("Alcazar: Start listening on: {}", &self.url);
-        for stream in listener.incoming() {
-            let _stream = stream.unwrap();
-            thread::spawn(move || {
-                HttpRequest::parse_stream(_stream);
-            });
+        loop {
+            match listener.accept() {
+                Ok((stream, _addr)) => {
+                    HttpRequest::parse_stream(stream);
+                }
+                Err(_) => info!("Client connexion failed."),
+            }
         }
     }
 }
