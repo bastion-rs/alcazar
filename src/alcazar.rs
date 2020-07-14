@@ -58,27 +58,31 @@ mod tests {
 
     #[test]
     fn add_url_ipv4() {
-        let app = Alcazar::new().with_url(get_ipv4_socket_addr(1337));
-        assert!(app.url == get_ipv4_socket_addr(1337));
+        let socket_addr = get_ipv4_socket_addr(1337);
+        let app = Alcazar::new().with_url(socket_addr);
+        assert!(app.url == socket_addr);
     }
 
     #[test]
     fn add_url_ipv6() {
-        let app = Alcazar::new().with_url(get_ipv6_socket_addr(1338));
-        assert!(app.url == get_ipv6_socket_addr(1338));
+        let socket_addr = get_ipv6_socket_addr(1338);
+        let app = Alcazar::new().with_url(socket_addr);
+        assert!(app.url == socket_addr);
     }
 
     #[test]
     fn try_to_connect_ipv4() {
-        create_app(get_ipv4_socket_addr(1339));
+        let socket_addr = get_ipv4_socket_addr(1339);
+        create_app(socket_addr);
 
-        assert!(TcpStream::connect("127.0.0.1:1339").is_ok())
+        assert!(TcpStream::connect(socket_addr).is_ok())
     }
 
     #[test]
     fn try_to_connect_ipv6() {
-        create_app(get_ipv6_socket_addr(1340));
+        let socket_addr = get_ipv6_socket_addr(1340);
+        create_app(socket_addr);
 
-        assert!(TcpStream::connect("[::1]:1340").is_ok())
+        assert!(TcpStream::connect(socket_addr).is_ok())
     }
 }
