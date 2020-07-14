@@ -48,3 +48,41 @@ impl HttpRequest {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
+        thread, io::{BufRead, BufReader, Write},
+    };
+    use crate::alcazar::Alcazar;
+
+    fn get_ipv4_socket_addr() -> SocketAddr {
+        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080)
+    }
+
+    fn create_app(url: SocketAddr) {
+        let app = Alcazar::new().with_url(url);
+        thread::spawn(move || {
+            app.start();
+        });
+    }
+
+    #[test]
+    fn parse_stream() {
+        create_app(get_ipv4_socket_addr());
+        let mut stream = TcpStream::connect(get_ipv4_socket_addr()).unwrap();
+        stream.write(b"GET / HTTP/1.1\r\n\r\n").unwrap();
+        stream.flush().unwrap();
+
+        let mut reader = BufReader::new(&stream);
+        let mut buffer = String::new();
+
+        match reader.read_line(&mut buffer) {
+            Ok(_n) => {
+                assert_eq!(buffer, "HTTP/1.1 200 OK\r\n");
+            }
+            _ => (),
+        }
+    }
+}
