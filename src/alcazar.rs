@@ -1,5 +1,8 @@
 use crate::http_request::HttpRequest;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener},
+    thread,
+};
 use tracing::info;
 
 pub struct Alcazar {
@@ -22,14 +25,11 @@ impl Alcazar {
         let listener = TcpListener::bind(&self.url).unwrap();
 
         info!("Alcazar: Start listening on: {}", &self.url);
-        loop {
-            match listener.accept() {
-                Ok((stream, addr)) => {
-                    HttpRequest::parse_stream(stream);
-                    info!("Client connected from: {}", addr);
-                }
-                Err(_) => info!("Client connexion failed."),
-            }
+        for stream in listener.incoming() {
+            let _stream = stream.unwrap();
+            thread::spawn(move || {
+                HttpRequest::parse_stream(_stream);
+            });
         }
     }
 }
