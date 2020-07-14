@@ -51,11 +51,12 @@ impl HttpRequest {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
-        thread, io::{BufRead, BufReader, Write},
-    };
     use crate::alcazar::Alcazar;
+    use std::{
+        io::{BufRead, BufReader, Write},
+        net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
+        thread,
+    };
 
     fn get_ipv4_socket_addr() -> SocketAddr {
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080)
