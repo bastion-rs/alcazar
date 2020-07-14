@@ -77,7 +77,7 @@ mod tests {
 
     #[test]
     fn try_to_connect_ipv6() {
-        create_app(get_ipv6_socket_addr(1340));
+        create_app(get_ipv6_socket_addr(1341));
 
         assert!(TcpStream::connect("[::1]:8080").is_ok())
     }
