@@ -41,7 +41,7 @@ impl HttpRequest {
                 Some(ref _path) => {
                     info!("Request path is: {}", _path);
                     let response = "HTTP/1.1 200 OK\r\n\r\n";
-                    stream.write(response.as_bytes()).unwrap();
+                    stream.write_all(response.as_bytes()).unwrap();
                     stream.flush().unwrap();
                 }
                 None => {
