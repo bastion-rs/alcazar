@@ -31,7 +31,6 @@ impl AlcazarBuilder {
             TcpListener::bind(self.url.unwrap_or_else(|| "0.0.0.0:0".parse().unwrap())).unwrap();
 
         let local_addr = listener.local_addr().unwrap();
-        let router = self.router.clone();
 
         info!("listening to {}", local_addr);
         std::thread::spawn(move || loop {
@@ -39,7 +38,7 @@ impl AlcazarBuilder {
                 Ok((mut stream, _addr)) => {
                     // TODO: Stop to unwrap the world, set up a error handler
                     let http_request = HttpRequest::parse_stream(&stream).unwrap();
-                    let handler = router.get_handler(
+                    let handler = self.router.get_handler(
                         http_request.method().clone().unwrap(),
                         http_request.path().clone().unwrap(),
                     );
@@ -53,25 +52,17 @@ impl AlcazarBuilder {
             }
         });
 
-        Alcazar {
-            local_addr,
-            router: self.router,
-        }
+        Alcazar { local_addr }
     }
 }
 
 pub struct Alcazar {
     local_addr: SocketAddr,
-    router: Router,
 }
 
 impl Alcazar {
     pub fn local_addr(&self) -> &SocketAddr {
         &self.local_addr
-    }
-
-    pub fn router(&self) -> &Router {
-        &self.router
     }
 }
 
