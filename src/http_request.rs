@@ -1,10 +1,10 @@
+use crate::router::MethodType;
 use httparse::{Request, EMPTY_HEADER};
 use std::{
     io::{BufRead, BufReader},
     net::TcpStream,
 };
 use tracing::info;
-use crate::router::MethodType;
 
 pub struct HttpRequest {
     path: Option<String>,
@@ -72,7 +72,10 @@ impl HttpRequest {
 
 #[cfg(test)]
 mod tests {
-    use crate::{router::{Route, Endpoint, Router}, alcazar::AlcazarBuilder};
+    use crate::{
+        alcazar::AlcazarBuilder,
+        router::{Endpoint, Route, Router},
+    };
     use std::{
         io::{BufRead, BufReader, Write},
         net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
@@ -85,11 +88,8 @@ mod tests {
     #[test]
     fn parse_stream() {
         let endpoint = Endpoint::new();
-        let route = Route::new()
-            .set_endpoint(endpoint)
-            .set_path("/".into());
-        let router = Router::new()
-            .add_route(route);
+        let route = Route::new().set_endpoint(endpoint).set_path("/".into());
+        let router = Router::new().add_route(route);
         let alcazar = AlcazarBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)

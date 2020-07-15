@@ -1,4 +1,4 @@
-use crate::{router::Router, http_request::HttpRequest};
+use crate::{http_request::HttpRequest, router::Router};
 use std::{
     io::Write,
     net::{SocketAddr, TcpListener},
@@ -13,11 +13,17 @@ pub struct AlcazarBuilder {
 
 impl AlcazarBuilder {
     pub fn set_addr(self, url: SocketAddr) -> Self {
-        Self { url: url.into(), router: self.router }
+        Self {
+            url: url.into(),
+            router: self.router,
+        }
     }
 
     pub fn set_router(self, router: Router) -> Self {
-        Self { url: self.url, router }
+        Self {
+            url: self.url,
+            router,
+        }
     }
 
     pub fn start(self) -> Alcazar {
@@ -34,24 +40,29 @@ impl AlcazarBuilder {
                     // TODO: Stop to unwrap the world, set up a error handler
                     let http_request = HttpRequest::parse_stream(&stream).unwrap();
                     let handler = router.get_handler(
-                        http_request.method().clone().unwrap(), 
-                        http_request.path().clone().unwrap());
+                        http_request.method().clone().unwrap(),
+                        http_request.path().clone().unwrap(),
+                    );
                     // TODO: Router and middleware process, early return here for complete response
-                    // let response = b"HTTP/1.1 200 OK\r\n\r\n";
-                    stream.write_all(handler.unwrap().clone().get_response().as_bytes()).unwrap();
+                    stream
+                        .write_all(handler.unwrap().clone().get_response().as_bytes())
+                        .unwrap();
                     stream.flush().unwrap();
                 }
                 Err(_) => info!("Client connexion failed."),
             }
         });
 
-        Alcazar { local_addr, router: self.router }
+        Alcazar {
+            local_addr,
+            router: self.router,
+        }
     }
 }
 
 pub struct Alcazar {
     local_addr: SocketAddr,
-    router: Router
+    router: Router,
 }
 
 impl Alcazar {
@@ -67,8 +78,11 @@ impl Alcazar {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{io::{BufRead, BufReader}, net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream}};
     use crate::router::{Endpoint, Route};
+    use std::{
+        io::{BufRead, BufReader},
+        net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream},
+    };
 
     fn get_ipv4_socket_addr() -> SocketAddr {
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0)
@@ -102,14 +116,9 @@ mod tests {
     #[test]
     fn add_router() {
         let endpoint = Endpoint::new();
-        let route = Route::new()
-            .set_endpoint(endpoint)
-            .set_path("/".into());
-        let router = Router::new()
-            .add_route(route);
-        let alcazar = AlcazarBuilder::default()
-            .set_router(router)
-            .start();
+        let route = Route::new().set_endpoint(endpoint).set_path("/".into());
+        let router = Router::new().add_route(route);
+        let alcazar = AlcazarBuilder::default().set_router(router).start();
 
         let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();
         stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();
