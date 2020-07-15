@@ -73,7 +73,7 @@ impl HttpRequest {
 #[cfg(test)]
 mod tests {
     use crate::{
-        alcazar::AlcazarBuilder,
+        alcazar::AppBuilder,
         router::{Endpoint, Route, Router},
     };
     use std::{
@@ -90,7 +90,7 @@ mod tests {
         let endpoint = Endpoint::new();
         let route = Route::new().set_endpoint(endpoint).set_path("/".into());
         let router = Router::new().add_route(route);
-        let alcazar = AlcazarBuilder::default()
+        let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
             .start();

@@ -6,12 +6,12 @@ use std::{
 use tracing::info;
 
 #[derive(Default)]
-pub struct AlcazarBuilder {
+pub struct AppBuilder {
     url: Option<SocketAddr>,
     router: Router,
 }
 
-impl AlcazarBuilder {
+impl AppBuilder {
     pub fn set_addr(self, url: SocketAddr) -> Self {
         Self {
             url: url.into(),
@@ -26,7 +26,7 @@ impl AlcazarBuilder {
         }
     }
 
-    pub fn start(self) -> Alcazar {
+    pub fn start(self) -> App {
         let listener =
             TcpListener::bind(self.url.unwrap_or_else(|| "0.0.0.0:0".parse().unwrap())).unwrap();
 
@@ -52,15 +52,15 @@ impl AlcazarBuilder {
             }
         });
 
-        Alcazar { local_addr }
+        App { local_addr }
     }
 }
 
-pub struct Alcazar {
+pub struct App {
     local_addr: SocketAddr,
 }
 
-impl Alcazar {
+impl App {
     pub fn local_addr(&self) -> &SocketAddr {
         &self.local_addr
     }
@@ -85,7 +85,7 @@ mod tests {
 
     #[test]
     fn add_url_ipv4() {
-        let alcazar = AlcazarBuilder::default()
+        let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .start();
 
@@ -97,7 +97,7 @@ mod tests {
 
     #[test]
     fn add_url_ipv6() {
-        let alcazar = AlcazarBuilder::default()
+        let alcazar = AppBuilder::default()
             .set_addr(get_ipv6_socket_addr())
             .start();
 
@@ -109,7 +109,7 @@ mod tests {
         let endpoint = Endpoint::new();
         let route = Route::new().set_endpoint(endpoint).set_path("/".into());
         let router = Router::new().add_route(route);
-        let alcazar = AlcazarBuilder::default().set_router(router).start();
+        let alcazar = AppBuilder::default().set_router(router).start();
 
         let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();
         stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();
@@ -127,7 +127,7 @@ mod tests {
 
     // #[test]
     // fn try_to_connect_ipv4() {
-    //     let alcazar = AlcazarBuilder::default()
+    //     let alcazar = AppBuilder::default()
     //         .set_addr(get_ipv4_socket_addr())
     //         .start();
 
@@ -136,7 +136,7 @@ mod tests {
 
     // #[test]
     // fn try_to_connect_ipv6() {
-    //     let alcazar = AlcazarBuilder::default()
+    //     let alcazar = AppBuilder::default()
     //         .set_addr(get_ipv6_socket_addr())
     //         .start();
 
