@@ -51,7 +51,7 @@ impl HttpRequest {
                 "OPTIONS" => MethodType::OPTIONS,
                 "TRACE" => MethodType::TRACE,
                 "HEAD" => MethodType::HEAD,
-                _ => MethodType::GET
+                _ => MethodType::GET,
             };
             Some(HttpRequest { path, method })
         } else {

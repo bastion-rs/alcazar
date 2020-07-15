@@ -38,10 +38,9 @@ impl AppBuilder {
                 Ok((mut stream, _addr)) => {
                     // TODO: Stop to unwrap the world, set up a error handler
                     let http_request = HttpRequest::parse_stream(&stream).unwrap();
-                    let handler = self.router.get_handler(
-                        http_request.method().clone(),
-                        http_request.path(),
-                    );
+                    let handler = self
+                        .router
+                        .get_handler(http_request.method().clone(), http_request.path());
                     // TODO: Router and middleware process, early return here for complete response
                     stream
                         .write_all(handler.unwrap().clone().get_response().as_bytes())
