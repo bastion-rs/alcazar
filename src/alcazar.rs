@@ -39,8 +39,8 @@ impl AlcazarBuilder {
                     // TODO: Stop to unwrap the world, set up a error handler
                     let http_request = HttpRequest::parse_stream(&stream).unwrap();
                     let handler = self.router.get_handler(
-                        http_request.method().clone().unwrap(),
-                        http_request.path().clone().unwrap(),
+                        http_request.method().clone(),
+                        http_request.path(),
                     );
                     // TODO: Router and middleware process, early return here for complete response
                     stream

@@ -7,8 +7,8 @@ use std::{
 use tracing::info;
 
 pub struct HttpRequest {
-    path: Option<String>,
-    method: Option<MethodType>,
+    path: String,
+    method: MethodType,
 }
 
 // See https://users.rust-lang.org/t/curl-post-tcpstream/38350/3 for understand how to handle a TcpStream as HttpRequest
@@ -41,17 +41,17 @@ impl HttpRequest {
         // If the request is complete we are returning the response in the stream
         if request_status.is_complete() {
             info!("Request is complete.");
-            let path = request.path.map(String::from);
+            let path = request.path.map(String::from).unwrap();
             let method = match request.method.unwrap() {
-                "POST" => Some(MethodType::POST),
-                "GET" => Some(MethodType::GET),
-                "PATCH" => Some(MethodType::PATCH),
-                "DELETE" => Some(MethodType::DELETE),
-                "CONNECT" => Some(MethodType::CONNECT),
-                "OPTIONS" => Some(MethodType::OPTIONS),
-                "TRACE" => Some(MethodType::TRACE),
-                "HEAD" => Some(MethodType::HEAD),
-                _ => None,
+                "POST" => MethodType::POST,
+                "GET" => MethodType::GET,
+                "PATCH" => MethodType::PATCH,
+                "DELETE" => MethodType::DELETE,
+                "CONNECT" => MethodType::CONNECT,
+                "OPTIONS" => MethodType::OPTIONS,
+                "TRACE" => MethodType::TRACE,
+                "HEAD" => MethodType::HEAD,
+                _ => MethodType::GET
             };
             Some(HttpRequest { path, method })
         } else {
@@ -61,11 +61,11 @@ impl HttpRequest {
         }
     }
 
-    pub fn path(&self) -> &Option<String> {
-        &self.path
+    pub fn path(&self) -> &str {
+        self.path.as_ref()
     }
 
-    pub fn method(&self) -> &Option<MethodType> {
+    pub fn method(&self) -> &MethodType {
         &self.method
     }
 }

@@ -44,7 +44,7 @@ impl Router {
         self
     }
 
-    pub fn get_handler(&self, method: MethodType, path: String) -> Option<&Route> {
+    pub fn get_handler(&self, method: MethodType, path: &str) -> Option<&Route> {
         for route in &self.routes {
             if path == route.path && method == route.endpoint.method {
                 return Some(route);
