@@ -132,21 +132,23 @@ mod tests {
         assert_eq!(buffer, "HTTP/1.1 200 OK\r\n");
     }
 
-    #[test]
-    fn try_to_connect_ipv4() {
-        let alcazar = AlcazarBuilder::default()
-            .set_addr(get_ipv4_socket_addr())
-            .start();
+    // Test behind are both useless actually and need to be rework
 
-        TcpStream::connect(alcazar.local_addr()).unwrap();
-    }
+    // #[test]
+    // fn try_to_connect_ipv4() {
+    //     let alcazar = AlcazarBuilder::default()
+    //         .set_addr(get_ipv4_socket_addr())
+    //         .start();
 
-    #[test]
-    fn try_to_connect_ipv6() {
-        let alcazar = AlcazarBuilder::default()
-            .set_addr(get_ipv6_socket_addr())
-            .start();
+    //     TcpStream::connect(alcazar.local_addr()).unwrap();
+    // }
 
-        TcpStream::connect(alcazar.local_addr()).unwrap();
-    }
+    // #[test]
+    // fn try_to_connect_ipv6() {
+    //     let alcazar = AlcazarBuilder::default()
+    //         .set_addr(get_ipv6_socket_addr())
+    //         .start();
+
+    //     TcpStream::connect(alcazar.local_addr()).unwrap();
+    // }
 }
