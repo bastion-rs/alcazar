@@ -1,4 +1,4 @@
-use crate::http_request::HttpRequest;
+use crate::{router::Router, http_request::HttpRequest};
 use std::{
     io::Write,
     net::{SocketAddr, TcpListener},
@@ -8,11 +8,16 @@ use tracing::info;
 #[derive(Default)]
 pub struct AlcazarBuilder {
     url: Option<SocketAddr>,
+    router: Router,
 }
 
 impl AlcazarBuilder {
     pub fn set_addr(self, url: SocketAddr) -> Self {
-        Self { url: url.into() }
+        Self { url: url.into(), router: self.router }
+    }
+
+    pub fn set_router(self, router: Router) -> Self {
+        Self { url: self.url, router }
     }
 
     pub fn start(self) -> Alcazar {
@@ -20,6 +25,7 @@ impl AlcazarBuilder {
             TcpListener::bind(self.url.unwrap_or_else(|| "0.0.0.0:0".parse().unwrap())).unwrap();
 
         let local_addr = listener.local_addr().unwrap();
+        let router = self.router.clone();
 
         info!("listening to {}", local_addr);
         std::thread::spawn(move || loop {
@@ -27,35 +33,42 @@ impl AlcazarBuilder {
                 Ok((mut stream, _addr)) => {
                     // TODO: Stop to unwrap the world, set up a error handler
                     let http_request = HttpRequest::parse_stream(&stream).unwrap();
-                    http_request.path();
-                    http_request.method();
+                    let handler = router.get_handler(
+                        http_request.method().clone().unwrap(), 
+                        http_request.path().clone().unwrap());
                     // TODO: Router and middleware process, early return here for complete response
-                    let response = "HTTP/1.1 200 OK\r\n\r\n";
-                    stream.write_all(response.as_bytes()).unwrap();
+                    // let response = b"HTTP/1.1 200 OK\r\n\r\n";
+                    stream.write_all(handler.unwrap().clone().get_response().as_bytes()).unwrap();
                     stream.flush().unwrap();
                 }
                 Err(_) => info!("Client connexion failed."),
             }
         });
 
-        Alcazar { local_addr }
+        Alcazar { local_addr, router: self.router }
     }
 }
 
 pub struct Alcazar {
     local_addr: SocketAddr,
+    router: Router
 }
 
 impl Alcazar {
     pub fn local_addr(&self) -> &SocketAddr {
         &self.local_addr
     }
+
+    pub fn router(&self) -> &Router {
+        &self.router
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream};
+    use std::{io::{BufRead, BufReader}, net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream}};
+    use crate::router::{Endpoint, Route};
 
     fn get_ipv4_socket_addr() -> SocketAddr {
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0)
@@ -84,6 +97,30 @@ mod tests {
             .start();
 
         assert_eq!("::1".parse::<IpAddr>().unwrap(), alcazar.local_addr().ip());
+    }
+
+    #[test]
+    fn add_router() {
+        let endpoint = Endpoint::new();
+        let route = Route::new()
+            .set_endpoint(endpoint)
+            .set_path("/".into());
+        let router = Router::new()
+            .add_route(route);
+        let alcazar = AlcazarBuilder::default()
+            .set_router(router)
+            .start();
+
+        let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();
+        stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();
+        stream.flush().unwrap();
+
+        let mut reader = BufReader::new(&stream);
+        let mut buffer = String::new();
+
+        let _ = reader.read_line(&mut buffer).unwrap();
+
+        assert_eq!(buffer, "HTTP/1.1 200 OK\r\n");
     }
 
     #[test]
