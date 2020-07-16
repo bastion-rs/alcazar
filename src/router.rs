@@ -1,4 +1,4 @@
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum MethodType {
     POST,
     GET,
@@ -21,7 +21,7 @@ pub struct Route {
     endpoint: Endpoint,
 }
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct Router {
     routes: Vec<Route>,
 }
@@ -35,13 +35,10 @@ impl Default for Endpoint {
 }
 
 impl Router {
-    pub fn new() -> Self {
-        Router::default()
-    }
-
-    pub fn add_route(mut self, route: Route) -> Self {
-        self.routes.push(route);
-        self
+    pub fn new(routes: Vec<Route>) -> Self {
+        Router {
+            routes
+        }
     }
 
     pub fn get_handler(&self, method: MethodType, path: &str) -> Option<&Route> {
@@ -55,18 +52,11 @@ impl Router {
 }
 
 impl Route {
-    pub fn new() -> Self {
-        Route::default()
-    }
-
-    pub fn set_path(mut self, path: String) -> Self {
-        self.path = path;
-        self
-    }
-
-    pub fn set_endpoint(mut self, endpoint: Endpoint) -> Self {
-        self.endpoint = endpoint;
-        self
+    pub fn new(path: String, endpoint: Endpoint) -> Self {
+        Route {
+            path,
+            endpoint
+        }
     }
 
     pub fn get_response(self) -> &'static str {
@@ -75,12 +65,9 @@ impl Route {
 }
 
 impl Endpoint {
-    pub fn new() -> Self {
-        Endpoint::default()
-    }
-
-    pub fn set_method(mut self, method: MethodType) -> Self {
-        self.method = method;
-        self
+    pub fn new(method: MethodType) -> Self {
+        Endpoint {
+            method
+        }
     }
 }

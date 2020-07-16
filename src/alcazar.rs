@@ -40,7 +40,7 @@ impl AppBuilder {
                     let http_request = HttpRequest::parse_stream(&stream).unwrap();
                     let handler = self
                         .router
-                        .get_handler(http_request.method().clone(), http_request.path());
+                        .get_handler(http_request.method(), http_request.path());
                     // TODO: Router and middleware process, early return here for complete response
                     stream
                         .write_all(handler.unwrap().clone().get_response().as_bytes())
@@ -68,7 +68,7 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::router::{Endpoint, Route};
+    use crate::router::{Endpoint, Route, MethodType};
     use std::{
         io::{BufRead, BufReader},
         net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream},
@@ -105,9 +105,11 @@ mod tests {
 
     #[test]
     fn add_router() {
-        let endpoint = Endpoint::new();
-        let route = Route::new().set_endpoint(endpoint).set_path("/".into());
-        let router = Router::new().add_route(route);
+        let endpoint = Endpoint::new(MethodType::GET);
+        let route = Route::new("/".into(), endpoint);
+        let mut routes = Vec::new();
+        routes.push(route);
+        let router = Router::new(routes);
         let alcazar = AppBuilder::default().set_router(router).start();
 
         let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();

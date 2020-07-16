@@ -65,8 +65,8 @@ impl HttpRequest {
         self.path.as_ref()
     }
 
-    pub fn method(&self) -> &MethodType {
-        &self.method
+    pub fn method(&self) -> MethodType {
+        self.method
     }
 }
 
@@ -74,7 +74,7 @@ impl HttpRequest {
 mod tests {
     use crate::{
         alcazar::AppBuilder,
-        router::{Endpoint, Route, Router},
+        router::{Endpoint, Route, Router, MethodType},
     };
     use std::{
         io::{BufRead, BufReader, Write},
@@ -87,9 +87,11 @@ mod tests {
 
     #[test]
     fn parse_stream() {
-        let endpoint = Endpoint::new();
-        let route = Route::new().set_endpoint(endpoint).set_path("/".into());
-        let router = Router::new().add_route(route);
+        let endpoint = Endpoint::new(MethodType::GET);
+        let route = Route::new("/".into(), endpoint);
+        let mut routes = Vec::new();
+        routes.push(route);
+        let router = Router::new(routes);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
