@@ -23,6 +23,23 @@ impl Default for Endpoint {
     }
 }
 
+impl Endpoint {
+    pub fn new() -> Self {
+        Endpoint::default()
+    }
+
+    pub fn add_method(&mut self, method: MethodType) -> &mut Self {
+        self.method = method;
+        self
+    }
+
+    pub fn build(&mut self) -> Self {
+        Endpoint {
+            method: self.method.clone(),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Route {
     path: String,
@@ -38,6 +55,33 @@ impl Default for Route {
     }
 }
 
+impl Route {
+    pub fn new() -> Self {
+        Route::default()
+    }
+
+    pub fn add_path(&mut self, path: String) -> &mut Self {
+        self.path = path;
+        self
+    }
+
+    pub fn add_endpoint(&mut self, endpoint: Endpoint) -> &mut Self {
+        self.endpoint = endpoint;
+        self
+    }
+
+    pub fn build(&mut self) -> Self {
+        Route {
+            path: self.path.clone(),
+            endpoint: self.endpoint.clone(),
+        }
+    }
+
+    pub fn get_response(self) -> &'static str {
+        "HTTP/1.1 200 OK\r\n\r\n"
+    }
+}
+
 #[derive(Clone)]
 pub struct Router {
     routes: Vec<Route>,
@@ -45,16 +89,31 @@ pub struct Router {
 
 impl Default for Router {
     fn default() -> Self {
-        let mut routes = Vec::new();
-        routes.push(Route::default());
-
-        Self { routes }
+        Self { routes: Vec::new() }
     }
 }
 
 impl Router {
-    pub fn new(routes: Vec<Route>) -> Self {
-        Router { routes }
+    pub fn new() -> Self {
+        Router::default()
+    }
+
+    pub fn add_route(&mut self, route: Route) -> &mut Self {
+        self.routes.push(route);
+        self
+    }
+
+    pub fn add_routes(&mut self, routes: Vec<Route>) -> &mut Self {
+        for route in routes {
+            self.routes.push(route);
+        }
+        self
+    }
+
+    pub fn build(&mut self) -> Self {
+        Router {
+            routes: self.routes.clone(),
+        }
     }
 
     pub fn get_handler(&self, method: MethodType, path: &str) -> Option<&Route> {
@@ -64,21 +123,5 @@ impl Router {
             }
         }
         None
-    }
-}
-
-impl Route {
-    pub fn new(path: String, endpoint: Endpoint) -> Self {
-        Route { path, endpoint }
-    }
-
-    pub fn get_response(self) -> &'static str {
-        "HTTP/1.1 200 OK\r\n\r\n"
-    }
-}
-
-impl Endpoint {
-    pub fn new(method: MethodType) -> Self {
-        Endpoint { method }
     }
 }

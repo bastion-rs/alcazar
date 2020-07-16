@@ -101,11 +101,12 @@ mod tests {
 
     #[test]
     fn add_router() {
-        let endpoint = Endpoint::new(MethodType::GET);
-        let route = Route::new("/".into(), endpoint);
-        let mut routes = Vec::new();
-        routes.push(route);
-        let router = Router::new(routes);
+        let endpoint = Endpoint::new().add_method(MethodType::GET).build();
+        let route = Route::new()
+            .add_path("/".into())
+            .add_endpoint(endpoint)
+            .build();
+        let router = Router::new().add_route(route).build();
         let alcazar = AppBuilder::new().set_router(router).start();
 
         let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();
