@@ -15,30 +15,46 @@ pub struct Endpoint {
     method: MethodType,
 }
 
-#[derive(Default, Clone)]
-pub struct Route {
-    path: String,
-    endpoint: Endpoint,
-}
-
-#[derive(Default)]
-pub struct Router {
-    routes: Vec<Route>,
-}
-
 impl Default for Endpoint {
     fn default() -> Self {
-        Endpoint {
+        Self {
             method: MethodType::GET,
         }
     }
 }
 
+#[derive(Clone)]
+pub struct Route {
+    path: String,
+    endpoint: Endpoint,
+}
+
+impl Default for Route {
+    fn default() -> Self {
+        Self {
+            path: "/".into(),
+            endpoint: Endpoint::default(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Router {
+    routes: Vec<Route>,
+}
+
+impl Default for Router {
+    fn default() -> Self {
+        let mut routes = Vec::new();
+        routes.push(Route::default());
+
+        Self { routes }
+    }
+}
+
 impl Router {
     pub fn new(routes: Vec<Route>) -> Self {
-        Router {
-            routes
-        }
+        Router { routes }
     }
 
     pub fn get_handler(&self, method: MethodType, path: &str) -> Option<&Route> {
@@ -53,10 +69,7 @@ impl Router {
 
 impl Route {
     pub fn new(path: String, endpoint: Endpoint) -> Self {
-        Route {
-            path,
-            endpoint
-        }
+        Route { path, endpoint }
     }
 
     pub fn get_response(self) -> &'static str {
@@ -66,8 +79,6 @@ impl Route {
 
 impl Endpoint {
     pub fn new(method: MethodType) -> Self {
-        Endpoint {
-            method
-        }
+        Endpoint { method }
     }
 }

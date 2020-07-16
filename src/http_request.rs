@@ -74,7 +74,7 @@ impl HttpRequest {
 mod tests {
     use crate::{
         alcazar::AppBuilder,
-        router::{Endpoint, Route, Router, MethodType},
+        router::{Endpoint, MethodType, Route, Router},
     };
     use std::{
         io::{BufRead, BufReader, Write},
@@ -92,7 +92,7 @@ mod tests {
         let mut routes = Vec::new();
         routes.push(route);
         let router = Router::new(routes);
-        let alcazar = AppBuilder::default()
+        let alcazar = AppBuilder::new()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
             .start();
