@@ -87,15 +87,12 @@ mod tests {
 
     #[test]
     fn parse_stream() {
-        let endpoint = Endpoint::new().add_method(MethodType::GET).build();
-        let route = Route::new()
-            .add_path("/".into())
-            .add_endpoint(endpoint)
-            .build();
-        let router = Router::new().add_route(route).build();
-        let alcazar = AppBuilder::new()
+        let endpoint = Endpoint::default().add_method(MethodType::GET);
+        let route = Route::new().add_path("/".into()).add_endpoint(endpoint);
+        let router = Router::new().add_route(route);
+        let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
-            .set_router(router.clone())
+            .set_router(router)
             .start();
 
         let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();

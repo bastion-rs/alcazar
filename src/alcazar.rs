@@ -1,38 +1,36 @@
 use crate::{http_request::HttpRequest, router::Router};
 use std::{
     io::Write,
-    net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener},
+    net::{SocketAddr, TcpListener},
 };
 use tracing::info;
 
+#[derive(Default)]
 pub struct AppBuilder {
-    url: SocketAddr,
-    router: Router,
+    url: Option<SocketAddr>,
+    router: Option<Router>,
 }
 
 impl AppBuilder {
-    pub fn new() -> Self {
-        Self {
-            url: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0),
-            router: Router::default(),
-        }
-    }
-
     pub fn set_addr(&mut self, url: SocketAddr) -> &mut Self {
-        self.url = url;
+        self.url = Some(url);
         self
     }
 
     pub fn set_router(&mut self, router: Router) -> &mut Self {
-        self.router = router;
+        self.router = Some(router);
         self
     }
 
     pub fn start(&self) -> App {
-        let listener = TcpListener::bind(self.url).unwrap();
+        let listener =
+            TcpListener::bind(self.url.expect("Url is mandatory in AppBuilder")).unwrap();
 
         let local_addr = listener.local_addr().unwrap();
-        let router = self.router.clone();
+        let router = self
+            .router
+            .clone()
+            .expect("Router is mandatory in AppBuilder");
 
         info!("listening to {}", local_addr);
         std::thread::spawn(move || loop {
@@ -84,7 +82,9 @@ mod tests {
 
     #[test]
     fn add_url_ipv4() {
-        let alcazar = AppBuilder::new().set_addr(get_ipv4_socket_addr()).start();
+        let alcazar = AppBuilder::default()
+            .set_addr(get_ipv4_socket_addr())
+            .start();
 
         assert_eq!(
             "127.0.0.1".parse::<IpAddr>().unwrap(),
@@ -94,20 +94,19 @@ mod tests {
 
     #[test]
     fn add_url_ipv6() {
-        let alcazar = AppBuilder::new().set_addr(get_ipv6_socket_addr()).start();
+        let alcazar = AppBuilder::default()
+            .set_addr(get_ipv6_socket_addr())
+            .start();
 
         assert_eq!("::1".parse::<IpAddr>().unwrap(), alcazar.local_addr().ip());
     }
 
     #[test]
     fn add_router() {
-        let endpoint = Endpoint::new().add_method(MethodType::GET).build();
-        let route = Route::new()
-            .add_path("/".into())
-            .add_endpoint(endpoint)
-            .build();
-        let router = Router::new().add_route(route).build();
-        let alcazar = AppBuilder::new().set_router(router).start();
+        let endpoint = Endpoint::new().add_method(MethodType::GET);
+        let route = Route::new().add_path("/".into()).add_endpoint(endpoint);
+        let router = Router::new().add_route(route);
+        let alcazar = AppBuilder::default().set_router(router).start();
 
         let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();
         stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();

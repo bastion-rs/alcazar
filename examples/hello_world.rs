@@ -6,7 +6,7 @@ use std::{
 use std::{thread::park_timeout, time::Duration};
 
 fn main() {
-    let alcazar = AppBuilder::new()
+    let alcazar = AppBuilder::default()
         .set_addr(SocketAddr::new(
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             8080,

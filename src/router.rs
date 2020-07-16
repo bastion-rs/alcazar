@@ -28,15 +28,9 @@ impl Endpoint {
         Endpoint::default()
     }
 
-    pub fn add_method(&mut self, method: MethodType) -> &mut Self {
+    pub fn add_method(mut self, method: MethodType) -> Self {
         self.method = method;
         self
-    }
-
-    pub fn build(&mut self) -> Self {
-        Endpoint {
-            method: self.method.clone(),
-        }
     }
 }
 
@@ -60,21 +54,14 @@ impl Route {
         Route::default()
     }
 
-    pub fn add_path(&mut self, path: String) -> &mut Self {
+    pub fn add_path(mut self, path: String) -> Self {
         self.path = path;
         self
     }
 
-    pub fn add_endpoint(&mut self, endpoint: Endpoint) -> &mut Self {
+    pub fn add_endpoint(mut self, endpoint: Endpoint) -> Self {
         self.endpoint = endpoint;
         self
-    }
-
-    pub fn build(&mut self) -> Self {
-        Route {
-            path: self.path.clone(),
-            endpoint: self.endpoint.clone(),
-        }
     }
 
     pub fn get_response(self) -> &'static str {
@@ -98,22 +85,16 @@ impl Router {
         Router::default()
     }
 
-    pub fn add_route(&mut self, route: Route) -> &mut Self {
+    pub fn add_route(mut self, route: Route) -> Self {
         self.routes.push(route);
         self
     }
 
-    pub fn add_routes(&mut self, routes: Vec<Route>) -> &mut Self {
+    pub fn add_routes(mut self, routes: Vec<Route>) -> Self {
         for route in routes {
             self.routes.push(route);
         }
         self
-    }
-
-    pub fn build(&mut self) -> Self {
-        Router {
-            routes: self.routes.clone(),
-        }
     }
 
     pub fn get_handler(&self, method: MethodType, path: &str) -> Option<&Route> {
