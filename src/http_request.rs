@@ -93,7 +93,8 @@ mod tests {
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
-            .start();
+            .start()
+            .unwrap();
 
         let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();
         stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();

@@ -11,7 +11,8 @@ fn main() {
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             8080,
         ))
-        .start();
+        .start()
+        .unwrap();
 
     let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();
 

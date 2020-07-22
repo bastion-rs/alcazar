@@ -1,6 +1,6 @@
 use crate::{http_request::HttpRequest, router::Router};
 use std::{
-    io::Write,
+    io::{Write, Error},
     net::{SocketAddr, TcpListener},
 };
 use tracing::info;
@@ -22,11 +22,11 @@ impl AppBuilder {
         self
     }
 
-    pub fn start(&self) -> App {
+    pub fn start(&self) -> Result<App, Error> {
         let listener =
-            TcpListener::bind(self.url.expect("Url is mandatory in AppBuilder")).unwrap();
+            TcpListener::bind(self.url.expect("Url is mandatory in AppBuilder"))?;
 
-        let local_addr = listener.local_addr().unwrap();
+        let local_addr = listener.local_addr()?;
         let router = self
             .router
             .clone()
@@ -49,7 +49,7 @@ impl AppBuilder {
             }
         });
 
-        App { local_addr }
+        Ok(App { local_addr })
     }
 }
 
@@ -84,7 +84,8 @@ mod tests {
     fn add_url_ipv4() {
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
-            .start();
+            .start()
+            .unwrap();
 
         assert_eq!(
             "127.0.0.1".parse::<IpAddr>().unwrap(),
@@ -96,7 +97,8 @@ mod tests {
     fn add_url_ipv6() {
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv6_socket_addr())
-            .start();
+            .start()
+            .unwrap();
 
         assert_eq!("::1".parse::<IpAddr>().unwrap(), alcazar.local_addr().ip());
     }
@@ -106,7 +108,7 @@ mod tests {
         let endpoint = Endpoint::new().add_method(MethodType::GET);
         let route = Route::new().add_path("/".into()).add_endpoint(endpoint);
         let router = Router::new().add_route(route);
-        let alcazar = AppBuilder::default().set_router(router).start();
+        let alcazar = AppBuilder::default().set_router(router).start().unwrap();
 
         let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();
         stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();
