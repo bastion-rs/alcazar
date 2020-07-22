@@ -1,9 +1,23 @@
-use crate::{http_request::HttpRequest, router::Router};
+use crate::{
+    http_request::{HttpError, HttpRequest, ParseError},
+    router::Router,
+};
 use std::{
-    io::{Write, Error},
+    io::{Error as IOError, Write},
     net::{SocketAddr, TcpListener},
 };
+use thiserror::Error;
 use tracing::info;
+
+#[derive(Error, Debug)]
+pub enum AlcazarError {
+    #[error(transparent)]
+    IOError(#[from] IOError),
+    #[error(transparent)]
+    HttpError(#[from] HttpError),
+    #[error(transparent)]
+    ParseError(#[from] ParseError),
+}
 
 #[derive(Default)]
 pub struct AppBuilder {
@@ -22,9 +36,8 @@ impl AppBuilder {
         self
     }
 
-    pub fn start(&self) -> Result<App, Error> {
-        let listener =
-            TcpListener::bind(self.url.expect("Url is mandatory in AppBuilder"))?;
+    pub fn start(&self) -> Result<App, AlcazarError> {
+        let listener = TcpListener::bind(self.url.expect("Url is mandatory in AppBuilder"))?;
 
         let local_addr = listener.local_addr()?;
         let router = self

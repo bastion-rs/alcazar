@@ -1,10 +1,10 @@
-use crate::router::MethodType;
-use thiserror::Error;
-use httparse::{Request, EMPTY_HEADER};
+use crate::{alcazar::AlcazarError, router::MethodType};
+use httparse::{Error as HttparseError, Request, EMPTY_HEADER};
 use std::{
     io::{BufRead, BufReader},
     net::TcpStream,
 };
+use thiserror::Error;
 use tracing::info;
 
 #[derive(Error, Debug)]
@@ -15,6 +15,16 @@ pub enum HttpError {
     MethodNotAllowed,
 }
 
+#[derive(Error, Debug)]
+pub enum ParseError {
+    #[error(transparent)]
+    HttparseError(#[from] HttparseError),
+    #[error("method is missing in the request")]
+    MethodMissing,
+    #[error("path is missing in the request")]
+    PathMissing,
+}
+
 pub struct HttpRequest {
     path: String,
     method: MethodType,
@@ -22,7 +32,7 @@ pub struct HttpRequest {
 
 // See https://users.rust-lang.org/t/curl-post-tcpstream/38350/3 for understand how to handle a TcpStream as HttpRequest
 impl HttpRequest {
-    pub fn parse_stream(stream: &TcpStream) -> Result<HttpRequest, HttpError> {
+    pub fn parse_stream(stream: &TcpStream) -> Result<HttpRequest, AlcazarError> {
         // Creating the reader and the buffer for read the stream
         let mut reader = BufReader::new(stream);
         let mut buffer = String::new();
@@ -46,12 +56,24 @@ impl HttpRequest {
         let mut headers = [EMPTY_HEADER; 16];
         let mut request = Request::new(&mut headers[..]);
         // Getting the status of the request
-        let request_status = request.parse(buffer.as_ref()).unwrap();
+        let request_status = match request.parse(buffer.as_ref()) {
+            Ok(request_status) => Ok(request_status),
+            Err(_) => Err(AlcazarError::ParseError(ParseError::HttparseError(
+                HttparseError::Status,
+            ))),
+        }?;
         // If the request is complete we are returning the response in the stream
         if request_status.is_complete() {
             info!("Request is complete.");
-            let path = request.path.map(String::from).unwrap();
-            let method = match request.method.unwrap() {
+            let path = match request.path.map(String::from) {
+                Some(path) => Ok(path),
+                None => Err(AlcazarError::ParseError(ParseError::PathMissing)),
+            }?;
+            let method = match request.method {
+                Some(method) => Ok(method),
+                None => Err(AlcazarError::ParseError(ParseError::MethodMissing)),
+            };
+            let method = match method? {
                 "POST" => Ok(MethodType::POST),
                 "GET" => Ok(MethodType::GET),
                 "PATCH" => Ok(MethodType::PATCH),
@@ -60,11 +82,11 @@ impl HttpRequest {
                 "OPTIONS" => Ok(MethodType::OPTIONS),
                 "TRACE" => Ok(MethodType::TRACE),
                 "HEAD" => Ok(MethodType::HEAD),
-                _ => Err(HttpError::MethodNotAllowed),
+                _ => Err(AlcazarError::HttpError(HttpError::MethodNotAllowed)),
             }?;
             Ok(HttpRequest { path, method })
         } else {
-            Err(HttpError::PartialContent)
+            Err(AlcazarError::HttpError(HttpError::PartialContent))
         }
     }
 
