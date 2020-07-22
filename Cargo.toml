@@ -27,6 +27,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 url = "2.1.1"
 httparse = "1.3.4"
+thiserror = "1.0.20"
 
 # Log crates
 tracing = "0.1.16"

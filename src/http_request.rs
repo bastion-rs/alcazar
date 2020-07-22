@@ -1,10 +1,19 @@
 use crate::router::MethodType;
+use thiserror::Error;
 use httparse::{Request, EMPTY_HEADER};
 use std::{
     io::{BufRead, BufReader},
     net::TcpStream,
 };
 use tracing::info;
+
+#[derive(Error, Debug)]
+pub enum HttpError {
+    #[error("partial content sended: status code 206")]
+    PartialContent,
+    #[error("method not allowed: status code 405")]
+    MethodNotAllowed,
+}
 
 pub struct HttpRequest {
     path: String,
@@ -13,7 +22,7 @@ pub struct HttpRequest {
 
 // See https://users.rust-lang.org/t/curl-post-tcpstream/38350/3 for understand how to handle a TcpStream as HttpRequest
 impl HttpRequest {
-    pub fn parse_stream(stream: &TcpStream) -> Option<HttpRequest> {
+    pub fn parse_stream(stream: &TcpStream) -> Result<HttpRequest, HttpError> {
         // Creating the reader and the buffer for read the stream
         let mut reader = BufReader::new(stream);
         let mut buffer = String::new();
@@ -43,21 +52,19 @@ impl HttpRequest {
             info!("Request is complete.");
             let path = request.path.map(String::from).unwrap();
             let method = match request.method.unwrap() {
-                "POST" => MethodType::POST,
-                "GET" => MethodType::GET,
-                "PATCH" => MethodType::PATCH,
-                "DELETE" => MethodType::DELETE,
-                "CONNECT" => MethodType::CONNECT,
-                "OPTIONS" => MethodType::OPTIONS,
-                "TRACE" => MethodType::TRACE,
-                "HEAD" => MethodType::HEAD,
-                _ => MethodType::GET,
-            };
-            Some(HttpRequest { path, method })
+                "POST" => Ok(MethodType::POST),
+                "GET" => Ok(MethodType::GET),
+                "PATCH" => Ok(MethodType::PATCH),
+                "DELETE" => Ok(MethodType::DELETE),
+                "CONNECT" => Ok(MethodType::CONNECT),
+                "OPTIONS" => Ok(MethodType::OPTIONS),
+                "TRACE" => Ok(MethodType::TRACE),
+                "HEAD" => Ok(MethodType::HEAD),
+                _ => Err(HttpError::MethodNotAllowed),
+            }?;
+            Ok(HttpRequest { path, method })
         } else {
-            // TODO: Determine what to do if request is not complete
-            info!("Request is partial.");
-            None
+            Err(HttpError::PartialContent)
         }
     }
 
