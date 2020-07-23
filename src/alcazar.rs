@@ -46,18 +46,20 @@ impl AppBuilder {
             .expect("Router is mandatory in AppBuilder");
 
         info!("listening to {}", local_addr);
-        std::thread::spawn(move || -> Result<(), AlcazarError> { loop {
-            match listener.accept() {
-                Ok((mut stream, _addr)) => {
-                    let http_request = HttpRequest::parse_stream(&stream)?;
-                    let handler = router.get_handler(http_request.method(), http_request.path())?;
-                    stream
-                        .write_all(handler.clone().get_response().as_bytes())?;
-                    stream.flush()?;
+        std::thread::spawn(move || -> Result<(), AlcazarError> {
+            loop {
+                match listener.accept() {
+                    Ok((mut stream, _addr)) => {
+                        let http_request = HttpRequest::parse_stream(&stream)?;
+                        let handler =
+                            router.get_handler(http_request.method(), http_request.path())?;
+                        stream.write_all(handler.clone().get_response().as_bytes())?;
+                        stream.flush()?;
+                    }
+                    Err(_) => info!("Client connexion failed."),
                 }
-                Err(_) => info!("Client connexion failed."),
             }
-        }});
+        });
 
         Ok(App { local_addr })
     }

@@ -1,4 +1,4 @@
-use crate::{http_request::HttpError, alcazar::AlcazarError};
+use crate::{alcazar::AlcazarError, http_request::HttpError};
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum MethodType {
