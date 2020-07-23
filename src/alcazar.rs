@@ -46,21 +46,18 @@ impl AppBuilder {
             .expect("Router is mandatory in AppBuilder");
 
         info!("listening to {}", local_addr);
-        std::thread::spawn(move || loop {
+        std::thread::spawn(move || -> Result<(), AlcazarError> { loop {
             match listener.accept() {
                 Ok((mut stream, _addr)) => {
-                    // TODO: Stop to unwrap the world, set up a error handler
-                    let http_request = HttpRequest::parse_stream(&stream).unwrap();
-                    let handler = router.get_handler(http_request.method(), http_request.path());
-                    // TODO: Router and middleware process, early return here for complete response
+                    let http_request = HttpRequest::parse_stream(&stream)?;
+                    let handler = router.get_handler(http_request.method(), http_request.path())?;
                     stream
-                        .write_all(handler.unwrap().clone().get_response().as_bytes())
-                        .unwrap();
-                    stream.flush().unwrap();
+                        .write_all(handler.clone().get_response().as_bytes())?;
+                    stream.flush()?;
                 }
                 Err(_) => info!("Client connexion failed."),
             }
-        });
+        }});
 
         Ok(App { local_addr })
     }
@@ -95,8 +92,12 @@ mod tests {
 
     #[test]
     fn add_url_ipv4() {
+        let endpoint = Endpoint::default().add_method(MethodType::GET);
+        let route = Route::new().add_path("/".into()).add_endpoint(endpoint);
+        let router = Router::new().add_route(route);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
+            .set_router(router)
             .start()
             .unwrap();
 
@@ -108,8 +109,12 @@ mod tests {
 
     #[test]
     fn add_url_ipv6() {
+        let endpoint = Endpoint::default().add_method(MethodType::GET);
+        let route = Route::new().add_path("/".into()).add_endpoint(endpoint);
+        let router = Router::new().add_route(route);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv6_socket_addr())
+            .set_router(router)
             .start()
             .unwrap();
 
@@ -118,10 +123,14 @@ mod tests {
 
     #[test]
     fn add_router() {
-        let endpoint = Endpoint::new().add_method(MethodType::GET);
+        let endpoint = Endpoint::default().add_method(MethodType::GET);
         let route = Route::new().add_path("/".into()).add_endpoint(endpoint);
         let router = Router::new().add_route(route);
-        let alcazar = AppBuilder::default().set_router(router).start().unwrap();
+        let alcazar = AppBuilder::default()
+            .set_addr(get_ipv4_socket_addr())
+            .set_router(router)
+            .start()
+            .unwrap();
 
         let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();
         stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();
@@ -135,23 +144,31 @@ mod tests {
         assert_eq!(buffer, "HTTP/1.1 200 OK\r\n");
     }
 
-    // Test behind are both useless actually and need to be rework
+    #[test]
+    fn try_to_connect_ipv4() {
+        let endpoint = Endpoint::default().add_method(MethodType::GET);
+        let route = Route::new().add_path("/".into()).add_endpoint(endpoint);
+        let router = Router::new().add_route(route);
+        let alcazar = AppBuilder::default()
+            .set_addr(get_ipv4_socket_addr())
+            .set_router(router)
+            .start()
+            .unwrap();
 
-    // #[test]
-    // fn try_to_connect_ipv4() {
-    //     let alcazar = AppBuilder::default()
-    //         .set_addr(get_ipv4_socket_addr())
-    //         .start();
+        TcpStream::connect(alcazar.local_addr()).unwrap();
+    }
 
-    //     TcpStream::connect(alcazar.local_addr()).unwrap();
-    // }
+    #[test]
+    fn try_to_connect_ipv6() {
+        let endpoint = Endpoint::default().add_method(MethodType::GET);
+        let route = Route::new().add_path("/".into()).add_endpoint(endpoint);
+        let router = Router::new().add_route(route);
+        let alcazar = AppBuilder::default()
+            .set_addr(get_ipv6_socket_addr())
+            .set_router(router)
+            .start()
+            .unwrap();
 
-    // #[test]
-    // fn try_to_connect_ipv6() {
-    //     let alcazar = AppBuilder::default()
-    //         .set_addr(get_ipv6_socket_addr())
-    //         .start();
-
-    //     TcpStream::connect(alcazar.local_addr()).unwrap();
-    // }
+        TcpStream::connect(alcazar.local_addr()).unwrap();
+    }
 }

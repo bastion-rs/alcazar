@@ -1,3 +1,5 @@
+use crate::{http_request::HttpError, alcazar::AlcazarError};
+
 #[derive(PartialEq, Copy, Clone)]
 pub enum MethodType {
     POST,
@@ -97,12 +99,12 @@ impl Router {
         self
     }
 
-    pub fn get_handler(&self, method: MethodType, path: &str) -> Option<&Route> {
+    pub fn get_handler(&self, method: MethodType, path: &str) -> Result<&Route, AlcazarError> {
         for route in &self.routes {
             if path == route.path && method == route.endpoint.method {
-                return Some(route);
+                return Ok(route);
             }
         }
-        None
+        Err(AlcazarError::HttpError(HttpError::InternalServerError))
     }
 }

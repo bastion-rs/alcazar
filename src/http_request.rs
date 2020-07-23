@@ -11,8 +11,10 @@ use tracing::info;
 pub enum HttpError {
     #[error("partial content sended: status code 206")]
     PartialContent,
-    #[error("method not allowed: status code 405")]
-    MethodNotAllowed,
+    #[error("internal server error: status code 500")]
+    InternalServerError,
+    #[error("method not implemented: status code 501")]
+    MethodNotImplemented,
 }
 
 #[derive(Error, Debug)]
@@ -82,7 +84,7 @@ impl HttpRequest {
                 "OPTIONS" => Ok(MethodType::OPTIONS),
                 "TRACE" => Ok(MethodType::TRACE),
                 "HEAD" => Ok(MethodType::HEAD),
-                _ => Err(AlcazarError::HttpError(HttpError::MethodNotAllowed)),
+                _ => Err(AlcazarError::HttpError(HttpError::MethodNotImplemented)),
             }?;
             Ok(HttpRequest { path, method })
         } else {
