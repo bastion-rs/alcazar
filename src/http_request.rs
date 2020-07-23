@@ -67,29 +67,33 @@ impl HttpRequest {
         // If the request is complete we are returning the response in the stream
         if request_status.is_complete() {
             info!("Request is complete.");
-            let path = match request.path.map(String::from) {
-                Some(path) => Ok(path),
-                None => Err(AlcazarError::ParseError(ParseError::PathMissing)),
-            }?;
-            let method = match request.method {
-                Some(method) => Ok(method),
-                None => Err(AlcazarError::ParseError(ParseError::MethodMissing)),
-            };
-            let method = match method? {
-                "POST" => Ok(MethodType::POST),
-                "GET" => Ok(MethodType::GET),
-                "PATCH" => Ok(MethodType::PATCH),
-                "DELETE" => Ok(MethodType::DELETE),
-                "CONNECT" => Ok(MethodType::CONNECT),
-                "OPTIONS" => Ok(MethodType::OPTIONS),
-                "TRACE" => Ok(MethodType::TRACE),
-                "HEAD" => Ok(MethodType::HEAD),
-                _ => Err(AlcazarError::HttpError(HttpError::MethodNotImplemented)),
-            }?;
-            Ok(HttpRequest { path, method })
+            HttpRequest::parse_request(request)
         } else {
             Err(AlcazarError::HttpError(HttpError::PartialContent))
         }
+    }
+
+    fn parse_request(request: Request) -> Result<HttpRequest, AlcazarError> {
+        let path = match request.path.map(String::from) {
+            Some(path) => Ok(path),
+            None => Err(AlcazarError::ParseError(ParseError::PathMissing)),
+        }?;
+        let method = match request.method {
+            Some(method) => Ok(method),
+            None => Err(AlcazarError::ParseError(ParseError::MethodMissing)),
+        };
+        let method = match method? {
+            "POST" => Ok(MethodType::POST),
+            "GET" => Ok(MethodType::GET),
+            "PATCH" => Ok(MethodType::PATCH),
+            "DELETE" => Ok(MethodType::DELETE),
+            "CONNECT" => Ok(MethodType::CONNECT),
+            "OPTIONS" => Ok(MethodType::OPTIONS),
+            "TRACE" => Ok(MethodType::TRACE),
+            "HEAD" => Ok(MethodType::HEAD),
+            _ => Err(AlcazarError::HttpError(HttpError::MethodNotImplemented)),
+        }?;
+        Ok(HttpRequest { path, method })
     }
 
     pub fn path(&self) -> &str {
