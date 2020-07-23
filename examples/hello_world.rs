@@ -1,6 +1,6 @@
 use alcazar::prelude::*;
 use std::{
-    io::{BufReader, Write, BufRead},
+    io::{BufRead, BufReader, Write},
     net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
 };
 use std::{thread::park_timeout, time::Duration};
