@@ -1,4 +1,5 @@
 use crate::{alcazar::AlcazarError, http_request::HttpError};
+use std::str::FromStr;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum MethodType {
@@ -10,6 +11,24 @@ pub enum MethodType {
     OPTIONS,
     TRACE,
     HEAD,
+}
+
+impl FromStr for MethodType {
+    type Err = AlcazarError;
+
+    fn from_str(method: &str) -> Result<MethodType, AlcazarError> {
+        match method {
+            "POST" => Ok(MethodType::POST),
+            "GET" => Ok(MethodType::GET),
+            "PATCH" => Ok(MethodType::PATCH),
+            "DELETE" => Ok(MethodType::DELETE),
+            "CONNECT" => Ok(MethodType::CONNECT),
+            "OPTIONS" => Ok(MethodType::OPTIONS),
+            "TRACE" => Ok(MethodType::TRACE),
+            "HEAD" => Ok(MethodType::HEAD),
+            _ => Err(AlcazarError::HttpError(HttpError::MethodNotImplemented)),
+        }
+    }
 }
 
 #[derive(Clone)]

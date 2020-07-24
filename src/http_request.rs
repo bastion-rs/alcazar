@@ -3,6 +3,7 @@ use httparse::{Error as HttparseError, Request, EMPTY_HEADER};
 use std::{
     io::{BufRead, BufReader},
     net::TcpStream,
+    str::FromStr,
 };
 use thiserror::Error;
 use tracing::info;
@@ -81,18 +82,9 @@ impl HttpRequest {
         let method = match request.method {
             Some(method) => Ok(method),
             None => Err(AlcazarError::ParseError(ParseError::MethodMissing)),
-        };
-        let method = match method? {
-            "POST" => Ok(MethodType::POST),
-            "GET" => Ok(MethodType::GET),
-            "PATCH" => Ok(MethodType::PATCH),
-            "DELETE" => Ok(MethodType::DELETE),
-            "CONNECT" => Ok(MethodType::CONNECT),
-            "OPTIONS" => Ok(MethodType::OPTIONS),
-            "TRACE" => Ok(MethodType::TRACE),
-            "HEAD" => Ok(MethodType::HEAD),
-            _ => Err(AlcazarError::HttpError(HttpError::MethodNotImplemented)),
         }?;
+        let method = MethodType::from_str(method)?;
+
         Ok(HttpRequest { path, method })
     }
 
