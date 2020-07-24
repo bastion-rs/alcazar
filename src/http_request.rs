@@ -114,8 +114,8 @@ mod tests {
 
     #[test]
     fn parse_stream() {
-        let endpoint = Endpoint::default().add_method(MethodType::GET);
-        let route = Route::new().add_path("/".into()).add_endpoint(endpoint);
+        let endpoint = Endpoint::default().set_method(MethodType::GET);
+        let route = Route::new().set_path("/".into()).set_endpoint(endpoint);
         let router = Router::new().add_route(route);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())

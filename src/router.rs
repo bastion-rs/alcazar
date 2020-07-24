@@ -49,7 +49,7 @@ impl Endpoint {
         Endpoint::default()
     }
 
-    pub fn add_method(mut self, method: MethodType) -> Self {
+    pub fn set_method(mut self, method: MethodType) -> Self {
         self.method = method;
         self
     }
@@ -75,17 +75,17 @@ impl Route {
         Route::default()
     }
 
-    pub fn add_path(mut self, path: String) -> Self {
+    pub fn set_path(mut self, path: String) -> Self {
         self.path = path;
         self
     }
 
-    pub fn add_endpoint(mut self, endpoint: Endpoint) -> Self {
+    pub fn set_endpoint(mut self, endpoint: Endpoint) -> Self {
         self.endpoint = endpoint;
         self
     }
 
-    pub fn get_response(self) -> &'static str {
+    pub fn get_response(&self) -> &'static str {
         "HTTP/1.1 200 OK\r\n\r\n"
     }
 }
