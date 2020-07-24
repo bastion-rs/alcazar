@@ -46,7 +46,6 @@ impl AppBuilder {
 
     pub fn start(&self) -> Result<App, AlcazarError> {
         let listener = TcpListener::bind(self.addr)?;
-
         let local_addr = listener.local_addr()?;
         let router = self.router.clone();
 
