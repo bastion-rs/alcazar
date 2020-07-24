@@ -4,7 +4,7 @@ use crate::{
 };
 use std::{
     io::{Error as IOError, Write},
-    net::{SocketAddr, TcpListener},
+    net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener},
 };
 use thiserror::Error;
 use tracing::info;
@@ -19,31 +19,36 @@ pub enum AlcazarError {
     ParseError(#[from] ParseError),
 }
 
-#[derive(Default)]
 pub struct AppBuilder {
-    url: Option<SocketAddr>,
-    router: Option<Router>,
+    addr: SocketAddr,
+    router: Router,
+}
+
+impl Default for AppBuilder {
+    fn default() -> Self {
+        Self {
+            addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0),
+            router: Router::default(),
+        }
+    }
 }
 
 impl AppBuilder {
-    pub fn set_addr(&mut self, url: SocketAddr) -> &mut Self {
-        self.url = Some(url);
+    pub fn set_addr(&mut self, addr: SocketAddr) -> &mut Self {
+        self.addr = addr;
         self
     }
 
     pub fn set_router(&mut self, router: Router) -> &mut Self {
-        self.router = Some(router);
+        self.router = router;
         self
     }
 
     pub fn start(&self) -> Result<App, AlcazarError> {
-        let listener = TcpListener::bind(self.url.expect("Url is mandatory in AppBuilder"))?;
+        let listener = TcpListener::bind(self.addr)?;
 
         let local_addr = listener.local_addr()?;
-        let router = self
-            .router
-            .clone()
-            .expect("Router is mandatory in AppBuilder");
+        let router = self.router.clone();
 
         info!("listening to {}", local_addr);
         std::thread::spawn(move || -> Result<(), AlcazarError> {
@@ -56,7 +61,7 @@ impl AppBuilder {
                         stream.write_all(handler.clone().get_response().as_bytes())?;
                         stream.flush()?;
                     }
-                    Err(_) => info!("Client connexion failed."),
+                    Err(_) => info!("Client connection failed."),
                 }
             }
         });
