@@ -1,32 +1,26 @@
 use crate::error::{AlcazarError, HttpError, Result};
+use crate::request::HttpRequest;
+use crate::routing::pattern::PatternType;
 use std::str::FromStr;
 
 // TODO: Replace String in path for the 'a str type
 // TODO: Mark the structure and methods as pub(crate) later
 #[derive(Clone)]
 pub struct Endpoint {
-    path: String,
+    pattern: PatternType,
     methods: Vec<MethodType>,
-}
-
-impl<'a> Default for Endpoint {
-    fn default() -> Self {
-        Self {
-            path: String::new(),
-            methods: Vec::new(),
-        }
-    }
 }
 
 impl Endpoint {
     // Returns a default initialized endpoint instance.
-    pub fn new() -> Self {
-        Endpoint::default()
+    pub fn new(path: &str, methods: Vec<MethodType>) -> Result<Self> {
+        let pattern = PatternType::from_str(path)?;
+        Ok(Endpoint { pattern, methods })
     }
 
-    // Returns a path to the endpoint.
-    pub fn path(&self) -> &String {
-        &self.path
+    // Returns a pattern against which can be checked match.
+    pub fn pattern(&self) -> &PatternType {
+        &self.pattern
     }
 
     // Returns a list of acceptable methods.
@@ -34,16 +28,9 @@ impl Endpoint {
         &self.methods
     }
 
-    // Overrides a list of acceptable methods by the endpoint.
-    pub fn with_methods(mut self, methods: Vec<MethodType>) -> Self {
-        self.methods = methods;
-        self
-    }
-
-    // Overrides a path to the endpoint.
-    pub fn with_path(mut self, path: &str) -> Self {
-        self.path = path.to_string();
-        self
+    // TODO: Remove this method and call handler instead
+    pub fn get_response(&self, _request: &HttpRequest) -> &'static str {
+        "HTTP/1.1 200 OK\r\n\r\n"
     }
 }
 

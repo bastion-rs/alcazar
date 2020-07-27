@@ -14,6 +14,8 @@ pub enum AlcazarError {
     HttpError(#[from] HttpError),
     #[error(transparent)]
     ParseError(#[from] ParseError),
+    #[error(transparent)]
+    RoutingError(#[from] RoutingError),
 }
 
 #[derive(Error, Debug, Clone)]
@@ -34,4 +36,10 @@ pub enum ParseError {
     MethodMissing,
     #[error("path is missing in the request")]
     PathMissing,
+}
+
+#[derive(Error, Debug, Clone)]
+pub enum RoutingError {
+    #[error("found an invalid {part:?} part of the {path:?} path.")]
+    EndpointPathError { part: String, path: String },
 }

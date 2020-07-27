@@ -1,12 +1,12 @@
-use crate::endpoint::MethodType;
 use crate::error::{AlcazarError, HttpError, ParseError, Result};
+use crate::routing::endpoint::MethodType;
 use httparse::{Error as HttpParseError, Request, EMPTY_HEADER};
 use std::io::{BufRead, BufReader};
 use std::net::TcpStream;
 use std::str::FromStr;
 use tracing::info;
 
-pub(crate) struct HttpRequest {
+pub struct HttpRequest {
     path: String,
     method: MethodType,
 }

@@ -40,12 +40,11 @@ impl AppBuilder {
             loop {
                 match listener.accept() {
                     Ok((mut stream, _addr)) => {
-                        let http_request = HttpRequest::parse_stream(&stream)?;
+                        let request = HttpRequest::parse_stream(&stream)?;
+                        let endpoint = router.get_endpoint(request.method(), request.path())?;
                         // TODO: Call the endpoint's handler and write the response back
-                        let _endpoint =
-                            router.get_endpoint(http_request.method(), http_request.path())?;
-                        // let response = endpoint.handler(&http_request);
-                        // stream.write_all(response.as_bytes())?;
+                        let response = endpoint.get_response(&request);
+                        stream.write_all(response.as_bytes())?;
                         stream.flush()?;
                     }
                     Err(_) => info!("Client connection failed."),

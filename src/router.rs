@@ -1,5 +1,5 @@
-use crate::endpoint::{Endpoint, MethodType};
 use crate::error::{AlcazarError, HttpError, Result};
+use crate::routing::endpoint::{Endpoint, MethodType};
 use std::str::FromStr;
 
 #[derive(Clone)]
@@ -20,36 +20,43 @@ impl Router {
         Router::default()
     }
 
+    // Returns a list of declared endpoints.
     pub(crate) fn endpoints(&self) -> &Vec<Endpoint> {
         &self.endpoints
     }
 
     // TODO: Add handler parameter and set it up
     pub fn with_endpoint(mut self, path: &str, methods: &[&str]) -> Self {
-        let endpoint = Endpoint::new()
-            .with_methods(
-                methods
-                    .iter()
-                    .map(|method| {
-                        let fixed_method_name = method.trim().to_uppercase();
-                        MethodType::from_str(&fixed_method_name)
-                    })
-                    .filter_map(|method| method.ok())
-                    .collect(),
-            )
-            .with_path(path);
-        self.endpoints.push(endpoint);
+        let acceptable_methods = methods
+            .iter()
+            .map(|method| {
+                let fixed_method_name = method.trim().to_uppercase();
+                MethodType::from_str(&fixed_method_name)
+            })
+            .filter_map(|method| method.ok())
+            .collect();
+
+        match Endpoint::new(path, acceptable_methods) {
+            Ok(endpoint) => {
+                self.endpoints.push(endpoint);
+            }
+            Err(err) => println!("{:?}, The endpoint has been skipped.", err),
+        };
+
         self
     }
 
+    // Merges two routers together.
     pub fn include(mut self, router: &Router) -> Self {
         self.endpoints.extend(router.endpoints().iter().cloned());
         self
     }
 
+    // Returns an endpoint by the given path and the method.
     pub fn get_endpoint(&self, method: MethodType, path: &str) -> Result<&Endpoint> {
         for endpoint in &self.endpoints {
-            if path == endpoint.path() && endpoint.methods().contains(&method) {
+            let pattern = endpoint.pattern();
+            if pattern.is_match(path) && endpoint.methods().contains(&method) {
                 return Ok(endpoint);
             }
         }
