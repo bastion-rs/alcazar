@@ -1,23 +1,9 @@
-use crate::{
-    http_request::{HttpError, HttpRequest, ParseError},
-    router::Router,
-};
-use std::{
-    io::{Error as IOError, Write},
-    net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener},
-};
-use thiserror::Error;
+use crate::error::Result;
+use crate::request::HttpRequest;
+use crate::router::Router;
+use std::io::Write;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 use tracing::info;
-
-#[derive(Error, Debug)]
-pub enum AlcazarError {
-    #[error(transparent)]
-    IOError(#[from] IOError),
-    #[error(transparent)]
-    HttpError(#[from] HttpError),
-    #[error(transparent)]
-    ParseError(#[from] ParseError),
-}
 
 pub struct AppBuilder {
     addr: SocketAddr,
@@ -44,20 +30,22 @@ impl AppBuilder {
         self
     }
 
-    pub fn start(&self) -> Result<App, AlcazarError> {
+    pub fn start(&self) -> Result<App> {
         let listener = TcpListener::bind(self.addr)?;
         let local_addr = listener.local_addr()?;
         let router = self.router.clone();
 
         info!("listening to {}", local_addr);
-        std::thread::spawn(move || -> Result<(), AlcazarError> {
+        std::thread::spawn(move || -> Result<()> {
             loop {
                 match listener.accept() {
                     Ok((mut stream, _addr)) => {
                         let http_request = HttpRequest::parse_stream(&stream)?;
-                        let handler =
-                            router.get_handler(http_request.method(), http_request.path())?;
-                        stream.write_all(handler.get_response().as_bytes())?;
+                        // TODO: Call the endpoint's handler and write the response back
+                        let _endpoint =
+                            router.get_endpoint(http_request.method(), http_request.path())?;
+                        // let response = endpoint.handler(&http_request);
+                        // stream.write_all(response.as_bytes())?;
                         stream.flush()?;
                     }
                     Err(_) => info!("Client connection failed."),

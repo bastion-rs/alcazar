@@ -1,41 +1,19 @@
-use crate::{alcazar::AlcazarError, router::MethodType};
-use httparse::{Error as HttparseError, Request, EMPTY_HEADER};
-use std::{
-    io::{BufRead, BufReader},
-    net::TcpStream,
-    str::FromStr,
-};
-use thiserror::Error;
+use crate::endpoint::MethodType;
+use crate::error::{AlcazarError, HttpError, ParseError, Result};
+use httparse::{Error as HttpParseError, Request, EMPTY_HEADER};
+use std::io::{BufRead, BufReader};
+use std::net::TcpStream;
+use std::str::FromStr;
 use tracing::info;
 
-#[derive(Error, Debug, Clone)]
-pub enum HttpError {
-    #[error("partial content sended: status code 206")]
-    PartialContent,
-    #[error("internal server error: status code 500")]
-    InternalServerError,
-    #[error("method not implemented: status code 501")]
-    MethodNotImplemented,
-}
-
-#[derive(Error, Debug, Clone)]
-pub enum ParseError {
-    #[error(transparent)]
-    HttparseError(#[from] HttparseError),
-    #[error("method is missing in the request")]
-    MethodMissing,
-    #[error("path is missing in the request")]
-    PathMissing,
-}
-
-pub struct HttpRequest {
+pub(crate) struct HttpRequest {
     path: String,
     method: MethodType,
 }
 
 // See https://users.rust-lang.org/t/curl-post-tcpstream/38350/3 for understand how to handle a TcpStream as HttpRequest
 impl HttpRequest {
-    pub fn parse_stream(stream: &TcpStream) -> Result<HttpRequest, AlcazarError> {
+    pub(crate) fn parse_stream(stream: &TcpStream) -> Result<HttpRequest> {
         // Creating the reader and the buffer for read the stream
         let mut reader = BufReader::new(stream);
         let mut buffer = String::new();
@@ -61,8 +39,8 @@ impl HttpRequest {
         // Getting the status of the request
         let request_status = match request.parse(buffer.as_ref()) {
             Ok(request_status) => Ok(request_status),
-            Err(_) => Err(AlcazarError::ParseError(ParseError::HttparseError(
-                HttparseError::Status,
+            Err(_) => Err(AlcazarError::ParseError(ParseError::HttpParseError(
+                HttpParseError::Status,
             ))),
         }?;
         // If the request is complete we are returning the response in the stream
@@ -74,7 +52,7 @@ impl HttpRequest {
         }
     }
 
-    fn parse_request(request: Request) -> Result<HttpRequest, AlcazarError> {
+    fn parse_request(request: Request) -> Result<HttpRequest> {
         let path = match request.path.map(String::from) {
             Some(path) => Ok(path),
             None => Err(AlcazarError::ParseError(ParseError::PathMissing)),

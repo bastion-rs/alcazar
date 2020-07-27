@@ -1,103 +1,17 @@
-use crate::{alcazar::AlcazarError, http_request::HttpError};
+use crate::endpoint::{Endpoint, MethodType};
+use crate::error::{AlcazarError, HttpError, Result};
 use std::str::FromStr;
-
-#[derive(PartialEq, Copy, Clone)]
-pub enum MethodType {
-    POST,
-    GET,
-    PATCH,
-    DELETE,
-    CONNECT,
-    OPTIONS,
-    TRACE,
-    HEAD,
-}
-
-impl FromStr for MethodType {
-    type Err = AlcazarError;
-
-    fn from_str(method: &str) -> Result<MethodType, AlcazarError> {
-        match method {
-            "POST" => Ok(MethodType::POST),
-            "GET" => Ok(MethodType::GET),
-            "PATCH" => Ok(MethodType::PATCH),
-            "DELETE" => Ok(MethodType::DELETE),
-            "CONNECT" => Ok(MethodType::CONNECT),
-            "OPTIONS" => Ok(MethodType::OPTIONS),
-            "TRACE" => Ok(MethodType::TRACE),
-            "HEAD" => Ok(MethodType::HEAD),
-            _ => Err(AlcazarError::HttpError(HttpError::MethodNotImplemented)),
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct Endpoint {
-    method: MethodType,
-}
-
-impl Default for Endpoint {
-    fn default() -> Self {
-        Self {
-            method: MethodType::GET,
-        }
-    }
-}
-
-impl Endpoint {
-    pub fn new() -> Self {
-        Endpoint::default()
-    }
-
-    pub fn set_method(mut self, method: MethodType) -> Self {
-        self.method = method;
-        self
-    }
-}
-
-#[derive(Clone)]
-pub struct Route {
-    path: String,
-    endpoint: Endpoint,
-}
-
-impl Default for Route {
-    fn default() -> Self {
-        Self {
-            path: "/".into(),
-            endpoint: Endpoint::default(),
-        }
-    }
-}
-
-impl Route {
-    pub fn new() -> Self {
-        Route::default()
-    }
-
-    pub fn set_path(mut self, path: String) -> Self {
-        self.path = path;
-        self
-    }
-
-    pub fn set_endpoint(mut self, endpoint: Endpoint) -> Self {
-        self.endpoint = endpoint;
-        self
-    }
-
-    pub fn get_response(&self) -> &'static str {
-        "HTTP/1.1 200 OK\r\n\r\n"
-    }
-}
 
 #[derive(Clone)]
 pub struct Router {
-    routes: Vec<Route>,
+    endpoints: Vec<Endpoint>,
 }
 
 impl Default for Router {
     fn default() -> Self {
-        Self { routes: Vec::new() }
+        Self {
+            endpoints: Vec::new(),
+        }
     }
 }
 
@@ -106,22 +20,37 @@ impl Router {
         Router::default()
     }
 
-    pub fn add_route(mut self, route: Route) -> Self {
-        self.routes.push(route);
+    pub(crate) fn endpoints(&self) -> &Vec<Endpoint> {
+        &self.endpoints
+    }
+
+    // TODO: Add handler parameter and set it up
+    pub fn with_endpoint(mut self, path: &str, methods: &[&str]) -> Self {
+        let endpoint = Endpoint::new()
+            .with_methods(
+                methods
+                    .iter()
+                    .map(|method| {
+                        let fixed_method_name = method.trim().to_uppercase();
+                        MethodType::from_str(&fixed_method_name)
+                    })
+                    .filter_map(|method| method.ok())
+                    .collect(),
+            )
+            .with_path(path);
+        self.endpoints.push(endpoint);
         self
     }
 
-    pub fn add_routes(mut self, routes: Vec<Route>) -> Self {
-        for route in routes {
-            self.routes.push(route);
-        }
+    pub fn include(mut self, router: &Router) -> Self {
+        self.endpoints.extend(router.endpoints().iter().cloned());
         self
     }
 
-    pub fn get_handler(&self, method: MethodType, path: &str) -> Result<&Route, AlcazarError> {
-        for route in &self.routes {
-            if path == route.path && method == route.endpoint.method {
-                return Ok(route);
+    pub fn get_endpoint(&self, method: MethodType, path: &str) -> Result<&Endpoint> {
+        for endpoint in &self.endpoints {
+            if path == endpoint.path() && endpoint.methods().contains(&method) {
+                return Ok(endpoint);
             }
         }
         Err(AlcazarError::HttpError(HttpError::InternalServerError))
