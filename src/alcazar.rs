@@ -9,7 +9,7 @@ use std::{
 use thiserror::Error;
 use tracing::info;
 
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug)]
 pub enum AlcazarError {
     #[error(transparent)]
     IOError(#[from] IOError),

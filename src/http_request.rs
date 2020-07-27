@@ -8,7 +8,7 @@ use std::{
 use thiserror::Error;
 use tracing::info;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum HttpError {
     #[error("partial content sended: status code 206")]
     PartialContent,
@@ -18,7 +18,7 @@ pub enum HttpError {
     MethodNotImplemented,
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum ParseError {
     #[error(transparent)]
     HttparseError(#[from] HttparseError),
