@@ -6,9 +6,7 @@ use std::{
 use std::{thread::park_timeout, time::Duration};
 
 fn main() {
-    let endpoint = Endpoint::default().set_method(MethodType::GET);
-    let route = Route::new().set_path("/".into()).set_endpoint(endpoint);
-    let router = Router::new().add_route(route);
+    let router = Router::new().with_endpoint("/", &["get"]);
     let alcazar = AppBuilder::default()
         .set_addr(SocketAddr::new(
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),

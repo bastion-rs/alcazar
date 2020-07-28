@@ -77,14 +77,10 @@ impl HttpRequest {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        alcazar::AppBuilder,
-        router::{Endpoint, MethodType, Route, Router},
-    };
-    use std::{
-        io::{BufRead, BufReader, Write},
-        net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
-    };
+    use crate::alcazar::AppBuilder;
+    use crate::router::Router;
+    use std::io::{BufRead, BufReader, Write};
+    use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 
     fn get_ipv4_socket_addr() -> SocketAddr {
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0)
@@ -92,9 +88,7 @@ mod tests {
 
     #[test]
     fn parse_stream() {
-        let endpoint = Endpoint::default().set_method(MethodType::GET);
-        let route = Route::new().set_path("/".into()).set_endpoint(endpoint);
-        let router = Router::new().add_route(route);
+        let router = Router::new().with_endpoint("/", &["get"]);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)

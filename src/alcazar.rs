@@ -69,11 +69,8 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::router::{Endpoint, MethodType, Route};
-    use std::{
-        io::{BufRead, BufReader},
-        net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream},
-    };
+    use std::io::{BufRead, BufReader};
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream};
 
     fn get_ipv4_socket_addr() -> SocketAddr {
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0)
@@ -85,9 +82,7 @@ mod tests {
 
     #[test]
     fn add_url_ipv4() {
-        let endpoint = Endpoint::default().set_method(MethodType::GET);
-        let route = Route::new().set_path("/".into()).set_endpoint(endpoint);
-        let router = Router::new().add_route(route);
+        let router = Router::new().with_endpoint("/", &["get"]);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
@@ -102,9 +97,7 @@ mod tests {
 
     #[test]
     fn add_url_ipv6() {
-        let endpoint = Endpoint::default().set_method(MethodType::GET);
-        let route = Route::new().set_path("/".into()).set_endpoint(endpoint);
-        let router = Router::new().add_route(route);
+        let router = Router::new().with_endpoint("/", &["get"]);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv6_socket_addr())
             .set_router(router)
@@ -116,9 +109,7 @@ mod tests {
 
     #[test]
     fn add_router() {
-        let endpoint = Endpoint::default().set_method(MethodType::GET);
-        let route = Route::new().set_path("/".into()).set_endpoint(endpoint);
-        let router = Router::new().add_route(route);
+        let router = Router::new().with_endpoint("/", &["get"]);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
@@ -139,9 +130,7 @@ mod tests {
 
     #[test]
     fn try_to_connect_ipv4() {
-        let endpoint = Endpoint::default().set_method(MethodType::GET);
-        let route = Route::new().set_path("/".into()).set_endpoint(endpoint);
-        let router = Router::new().add_route(route);
+        let router = Router::new().with_endpoint("/", &["get"]);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
@@ -153,9 +142,7 @@ mod tests {
 
     #[test]
     fn try_to_connect_ipv6() {
-        let endpoint = Endpoint::default().set_method(MethodType::GET);
-        let route = Route::new().set_path("/".into()).set_endpoint(endpoint);
-        let router = Router::new().add_route(route);
+        let router = Router::new().with_endpoint("/", &["get"]);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv6_socket_addr())
             .set_router(router)
