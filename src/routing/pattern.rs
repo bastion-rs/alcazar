@@ -1,4 +1,5 @@
-use crate::error::{AlcazarError, Result};
+use crate::error::RoutingError::RegexCompileError;
+use crate::error::{AlcazarError, Result, RoutingError};
 use lazy_static::lazy_static;
 use regex::{escape, Regex};
 use std::str::FromStr;
@@ -35,20 +36,38 @@ impl FromStr for PatternType {
 
             for part in DYN_PARAM_REGEX.split(path) {
                 match VALID_DYN_PARAM_REGEX.captures(part) {
+                    // Construct a regular expression for the dynamic part
                     Some(capture) => {
                         let regex_part =
                             format!("(?P<{}>{})", &capture["part"], &ANY_VALUE_REGEX.as_str());
                         pattern.push_str(&regex_part);
                     }
+                    // Use static parts as-is
                     _ => {
+                        if part.contains('{') && part.contains('}') {
+                            return Err(AlcazarError::RoutingError(
+                                RoutingError::InvalidPathError {
+                                    part: part.to_string(),
+                                    path: path.to_string(),
+                                },
+                            ));
+                        }
+
                         let regex_part = escape(&part.to_string());
                         pattern.push_str(&regex_part);
                     }
                 };
             }
 
-            // TODO: Add error handling
-            let regex_pattern = Regex::new(&pattern).unwrap();
+            // Compile the whole regular expression that matches to the path
+            let regex_pattern = match Regex::new(&pattern) {
+                Ok(regex) => regex,
+                Err(err) => {
+                    return Err(AlcazarError::RoutingError(RegexCompileError(
+                        err.to_string(),
+                    )))
+                }
+            };
             return Ok(PatternType::Dynamic(regex_pattern));
         }
 

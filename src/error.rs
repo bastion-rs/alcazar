@@ -41,5 +41,7 @@ pub enum ParseError {
 #[derive(Error, Debug, Clone)]
 pub enum RoutingError {
     #[error("found an invalid {part:?} part of the {path:?} path.")]
-    EndpointPathError { part: String, path: String },
+    InvalidPathError { part: String, path: String },
+    #[error("can't compile {0} regex for the given path.")]
+    RegexCompileError(String),
 }
