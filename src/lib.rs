@@ -1,8 +1,12 @@
-mod alcazar;
-mod http_request;
-mod router;
+pub mod alcazar;
+pub mod error;
+pub mod request;
+pub mod router;
+pub mod routing;
 
 pub mod prelude {
     pub use crate::alcazar::{App, AppBuilder};
-    pub use crate::router::{Endpoint, MethodType, Route, Router};
+    pub use crate::router::Router;
+    // TODO: Remove endpoint later from public APIs
+    pub use crate::routing::endpoint::Endpoint;
 }
