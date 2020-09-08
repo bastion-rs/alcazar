@@ -1,6 +1,9 @@
-use crate::error::{AlcazarError, HttpError, Result};
 use crate::routing::endpoint::{Endpoint, MethodType};
-use std::str::FromStr;
+use crate::{
+    error::{AlcazarError, HttpError, Result},
+    routing::endpoint::Init,
+};
+use std::{future::Future, str::FromStr};
 
 #[derive(Clone)]
 pub struct Router {
@@ -26,7 +29,11 @@ impl Router {
     }
 
     // TODO: Add handler parameter and set it up
-    pub fn with_endpoint(mut self, path: &str, methods: &[&str]) -> Self {
+    pub fn with_endpoint<C, F>(mut self, path: &str, methods: &[&str], exec: C) -> Self
+    where
+        C: Fn() -> F + Send + Sync + 'static,
+        F: Future<Output = Result<()>> + Send + Sync + 'static,
+    {
         let acceptable_methods = methods
             .iter()
             .map(|method| {
@@ -35,8 +42,7 @@ impl Router {
             })
             .filter_map(|method| method.ok())
             .collect();
-
-        match Endpoint::new(path, acceptable_methods) {
+        match Endpoint::new(path, acceptable_methods, Init::new(exec)) {
             Ok(endpoint) => {
                 self.endpoints.push(endpoint);
             }

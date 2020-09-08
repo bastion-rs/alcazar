@@ -88,7 +88,7 @@ mod tests {
 
     #[test]
     fn parse_stream() {
-        let router = Router::new().with_endpoint("/", &["get"]);
+        let router = Router::new().with_endpoint("/", &["get"], move || async move { Ok(()) });
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)

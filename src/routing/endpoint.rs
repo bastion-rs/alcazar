@@ -1,21 +1,54 @@
 use crate::error::{AlcazarError, HttpError, Result};
-use crate::request::HttpRequest;
 use crate::routing::pattern::PatternType;
-use std::str::FromStr;
+use std::{future::Future, pin::Pin, str::FromStr, sync::Arc};
 
 // TODO: Replace String in path for the 'a str type
 // TODO: Mark the structure and methods as pub(crate) later
-#[derive(Clone)]
 pub struct Endpoint {
     pattern: PatternType,
     methods: Vec<MethodType>,
+    handler: Arc<Exec>,
+}
+
+impl Clone for Endpoint {
+    fn clone(&self) -> Self {
+        Self {
+            pattern: self.pattern.clone(),
+            methods: self.methods.clone(),
+            handler: Arc::clone(&self.handler),
+        }
+    }
+}
+
+pub struct Init(pub Box<dyn Fn() -> Exec + Send + Sync>);
+pub struct Exec(pub Pin<Box<dyn Future<Output = Result<()>> + Send + Sync>>);
+
+impl Init {
+    pub(crate) fn new<C, F>(init: C) -> Self
+    where
+        C: Fn() -> F + Send + Sync + 'static,
+        F: Future<Output = Result<()>> + Send + Sync + 'static,
+    {
+        let init = Box::new(move || {
+            let fut = init();
+            let exec = Box::pin(fut);
+
+            Exec(exec)
+        });
+
+        Init(init)
+    }
 }
 
 impl Endpoint {
     // Returns a default initialized endpoint instance.
-    pub fn new(path: &str, methods: Vec<MethodType>) -> Result<Self> {
+    pub fn new(path: &str, methods: Vec<MethodType>, handler: Init) -> Result<Self> {
         let pattern = PatternType::from_str(path)?;
-        Ok(Endpoint { pattern, methods })
+        Ok(Endpoint {
+            pattern,
+            methods,
+            handler: Arc::new((handler.0)()),
+        })
     }
 
     // Returns a pattern against which can be checked match.
@@ -29,7 +62,7 @@ impl Endpoint {
     }
 
     // TODO: Remove this method and call handler instead
-    pub fn get_response(&self, _request: &HttpRequest) -> &'static str {
+    pub fn handler(&self) -> &'static str {
         "HTTP/1.1 200 OK\r\n\r\n"
     }
 }

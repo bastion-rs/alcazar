@@ -1,8 +1,8 @@
 use crate::error::Result;
 use crate::request::HttpRequest;
 use crate::router::Router;
-use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
+use std::{io::Write, sync::Arc, sync::Mutex};
 use tracing::info;
 
 pub struct AppBuilder {
@@ -33,7 +33,8 @@ impl AppBuilder {
     pub fn start(&self) -> Result<App> {
         let listener = TcpListener::bind(self.addr)?;
         let local_addr = listener.local_addr()?;
-        let router = self.router.clone();
+        let router = Arc::new(Mutex::new(self.router.clone()));
+        let clone_router = Arc::clone(&router);
 
         info!("listening to {}", local_addr);
         std::thread::spawn(move || -> Result<()> {
@@ -41,10 +42,12 @@ impl AppBuilder {
                 match listener.accept() {
                     Ok((mut stream, _addr)) => {
                         let request = HttpRequest::parse_stream(&stream)?;
-                        let endpoint = router.get_endpoint(request.method(), request.path())?;
+                        let clone_router = clone_router.lock().unwrap();
+                        let endpoint =
+                            clone_router.get_endpoint(request.method(), request.path())?;
                         // TODO: Call the endpoint's handler and write the response back
-                        let response = endpoint.get_response(&request);
-                        stream.write_all(response.as_bytes())?;
+                        let handler = endpoint.handler();
+                        stream.write_all(handler.as_bytes())?;
                         stream.flush()?;
                     }
                     Err(_) => info!("Client connection failed."),
@@ -82,7 +85,7 @@ mod tests {
 
     #[test]
     fn add_url_ipv4() {
-        let router = Router::new().with_endpoint("/", &["get"]);
+        let router = Router::new().with_endpoint("/", &["get"], move || async move { Ok(()) });
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
@@ -97,7 +100,7 @@ mod tests {
 
     #[test]
     fn add_url_ipv6() {
-        let router = Router::new().with_endpoint("/", &["get"]);
+        let router = Router::new().with_endpoint("/", &["get"], move || async move { Ok(()) });
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv6_socket_addr())
             .set_router(router)
@@ -109,7 +112,7 @@ mod tests {
 
     #[test]
     fn add_router() {
-        let router = Router::new().with_endpoint("/", &["get"]);
+        let router = Router::new().with_endpoint("/", &["get"], move || async move { Ok(()) });
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
@@ -130,7 +133,7 @@ mod tests {
 
     #[test]
     fn try_to_connect_ipv4() {
-        let router = Router::new().with_endpoint("/", &["get"]);
+        let router = Router::new().with_endpoint("/", &["get"], move || async move { Ok(()) });
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
@@ -142,7 +145,7 @@ mod tests {
 
     #[test]
     fn try_to_connect_ipv6() {
-        let router = Router::new().with_endpoint("/", &["get"]);
+        let router = Router::new().with_endpoint("/", &["get"], move || async move { Ok(()) });
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv6_socket_addr())
             .set_router(router)
