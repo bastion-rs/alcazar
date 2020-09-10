@@ -78,6 +78,7 @@ impl HttpRequest {
 #[cfg(test)]
 mod tests {
     use crate::alcazar::AppBuilder;
+    use crate::error::Result;
     use crate::router::Router;
     use std::io::{BufRead, BufReader, Write};
     use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
@@ -86,9 +87,13 @@ mod tests {
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0)
     }
 
+    async fn handler() -> Result<()> {
+        Ok(())
+    }
+
     #[test]
     fn parse_stream() {
-        let router = Router::new().with_endpoint("/", &["get"], move || async move { Ok(()) });
+        let router = Router::new().with_endpoint("/", &["get"], handler);
         let alcazar = AppBuilder::default()
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)

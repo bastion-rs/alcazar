@@ -1,3 +1,4 @@
+use alcazar::error::Result;
 use alcazar::prelude::*;
 use std::{
     io::{BufRead, BufReader, Write},
@@ -5,8 +6,12 @@ use std::{
 };
 use std::{thread::park_timeout, time::Duration};
 
+async fn handler() -> Result<()> {
+    Ok(())
+}
+
 fn main() {
-    let router = Router::new().with_endpoint("/", &["get"], move || async move { Ok(()) });
+    let router = Router::new().with_endpoint("/", &["get"], handler);
     let alcazar = AppBuilder::default()
         .set_addr(SocketAddr::new(
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
