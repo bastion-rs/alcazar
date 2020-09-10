@@ -71,6 +71,9 @@ impl App {
 
 #[cfg(test)]
 mod tests {
+
+    use crate::status_code::StatusCode;
+
     use super::*;
     use std::io::{BufRead, BufReader};
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream};
@@ -83,8 +86,8 @@ mod tests {
         SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)), 0)
     }
 
-    async fn handler() -> Result<()> {
-        Ok(())
+    async fn handler() -> Result<StatusCode> {
+        Ok(StatusCode::Ok)
     }
 
     #[test]

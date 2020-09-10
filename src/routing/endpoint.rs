@@ -1,5 +1,8 @@
-use crate::error::{AlcazarError, HttpError, Result};
 use crate::routing::pattern::PatternType;
+use crate::{
+    error::{AlcazarError, HttpError, Result},
+    status_code::StatusCode,
+};
 use std::{future::Future, pin::Pin, str::FromStr, sync::Arc};
 
 // TODO: Replace String in path for the 'a str type
@@ -21,13 +24,13 @@ impl Clone for Endpoint {
 }
 
 pub struct Init(pub Box<dyn Fn() -> Exec + Send + Sync>);
-pub struct Exec(pub Pin<Box<dyn Future<Output = Result<()>> + Send + Sync>>);
+pub struct Exec(pub Pin<Box<dyn Future<Output = Result<StatusCode>> + Send + Sync>>);
 
 impl Init {
     pub(crate) fn new<C, F>(init: C) -> Self
     where
         C: Fn() -> F + Send + Sync + 'static,
-        F: Future<Output = Result<()>> + Send + Sync + 'static,
+        F: Future<Output = Result<StatusCode>> + Send + Sync + 'static,
     {
         let init = Box::new(move || {
             let fut = init();

@@ -1,7 +1,10 @@
-use crate::routing::endpoint::{Endpoint, MethodType};
 use crate::{
     error::{AlcazarError, HttpError, Result},
     routing::endpoint::Init,
+};
+use crate::{
+    routing::endpoint::{Endpoint, MethodType},
+    status_code::StatusCode,
 };
 use std::{future::Future, str::FromStr};
 
@@ -32,7 +35,7 @@ impl Router {
     pub fn with_endpoint<C, F>(mut self, path: &str, methods: &[&str], exec: C) -> Self
     where
         C: Fn() -> F + Send + Sync + 'static,
-        F: Future<Output = Result<()>> + Send + Sync + 'static,
+        F: Future<Output = Result<StatusCode>> + Send + Sync + 'static,
     {
         let acceptable_methods = methods
             .iter()

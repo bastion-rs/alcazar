@@ -77,9 +77,9 @@ impl HttpRequest {
 
 #[cfg(test)]
 mod tests {
-    use crate::alcazar::AppBuilder;
     use crate::error::Result;
     use crate::router::Router;
+    use crate::{alcazar::AppBuilder, status_code::StatusCode};
     use std::io::{BufRead, BufReader, Write};
     use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 
@@ -87,8 +87,8 @@ mod tests {
         SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0)
     }
 
-    async fn handler() -> Result<()> {
-        Ok(())
+    async fn handler() -> Result<StatusCode> {
+        Ok(StatusCode::Ok)
     }
 
     #[test]
