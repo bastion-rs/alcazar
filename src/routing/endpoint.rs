@@ -1,9 +1,14 @@
+use futures::future::BoxFuture;
+
 use crate::routing::pattern::PatternType;
 use crate::{
     error::{AlcazarError, HttpError, Result},
     status_code::StatusCode,
 };
-use std::{future::Future, pin::Pin, str::FromStr, sync::Arc};
+use std::{
+    fmt::Debug, fmt::Formatter, fmt::Result as FmtResult, future::Future, pin::Pin, str::FromStr,
+    sync::Arc,
+sync::Mutex};
 
 // TODO: Replace String in path for the 'a str type
 // TODO: Mark the structure and methods as pub(crate) later
@@ -24,13 +29,13 @@ impl Clone for Endpoint {
 }
 
 pub struct Init(pub Box<dyn Fn() -> Exec + Send + Sync>);
-pub struct Exec(pub Pin<Box<dyn Future<Output = Result<StatusCode>> + Send + Sync>>);
+pub struct Exec(pub BoxFuture<'static, Result<StatusCode>>);
 
 impl Init {
     pub(crate) fn new<C, F>(init: C) -> Self
     where
-        C: Fn() -> F + Send + Sync + 'static,
-        F: Future<Output = Result<StatusCode>> + Send + Sync + 'static,
+        C: Fn() -> F + Send + 'static + Sync,
+        F: Future<Output = Result<StatusCode>> + Send + 'static + Sync,
     {
         let init = Box::new(move || {
             let fut = init();
@@ -65,8 +70,8 @@ impl Endpoint {
     }
 
     // TODO: Remove this method and call handler instead
-    pub fn handler(&self) -> &'static str {
-        "HTTP/1.1 200 OK\r\n\r\n"
+    pub fn handler(&self) -> Arc<Exec> {
+        self.handler.clone()
     }
 }
 

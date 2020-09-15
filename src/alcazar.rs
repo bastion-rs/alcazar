@@ -1,9 +1,16 @@
 use crate::error::Result;
 use crate::request::HttpRequest;
 use crate::router::Router;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
-use std::{io::Write, sync::Arc, sync::Mutex};
+use crate::status_code::StatusCode;
+use std::{net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener}, pin::Pin};
+use std::{io::Write, sync::Arc};
+
+// use futures::future::BoxFuture;
+use futures::future::BoxFuture;
 use tracing::info;
+
+use bastion_executor::prelude::*;
+use lightproc::prelude::ProcStack;
 
 pub struct AppBuilder {
     addr: SocketAddr,
@@ -33,29 +40,36 @@ impl AppBuilder {
     pub fn start(&self) -> Result<App> {
         let listener = TcpListener::bind(self.addr)?;
         let local_addr = listener.local_addr()?;
-        let router = Arc::new(Mutex::new(self.router.clone()));
-        let clone_router = Arc::clone(&router);
 
         info!("listening to {}", local_addr);
-        std::thread::spawn(move || -> Result<()> {
-            loop {
-                match listener.accept() {
-                    Ok((mut stream, _addr)) => {
-                        let request = HttpRequest::parse_stream(&stream)?;
-                        let clone_router = clone_router.lock().unwrap();
-                        let endpoint =
-                            clone_router.get_endpoint(request.method(), request.path())?;
-                        // TODO: Call the endpoint's handler and write the response back
-                        let handler = endpoint.handler();
-                        stream.write_all(handler.as_bytes())?;
-                        stream.flush()?;
-                    }
-                    Err(_) => info!("Client connection failed."),
-                }
-            }
-        });
-
+        run(
+            async { handle_listener(listener, self.router.clone()).await },
+            ProcStack::default(),
+        )?;
         Ok(App { local_addr })
+    }
+}
+
+pub async fn handle_listener(listener: TcpListener, router: Router) -> Result<()> {
+    loop {
+        match listener.accept() {
+            Ok((mut stream, _addr)) => {
+                let request = HttpRequest::parse_stream(&stream)?;
+                let endpoint = router.get_endpoint(request.method(), request.path())?;
+                // TODO: Call the endpoint's handler and write the response back
+                let handler = endpoint.handler();
+                // let handler = (*handler).0;
+                let handler = &(*handler.0).await;
+                // let handler = handler.0.await.boxed();
+                // let yo = Box::new((*handler.0).await);
+                // let toto: &Result<StatusCode> = yo;
+
+                // let handler = run(handler, ProcStack::default());
+                // stream.write_all(toto.unwrap().into_string_response().as_slice())?;
+                stream.flush()?;
+            }
+            Err(_) => info!("Client connection failed."),
+        }
     }
 }
 
@@ -92,73 +106,85 @@ mod tests {
 
     #[test]
     fn add_url_ipv4() {
-        let router = Router::new().with_endpoint("/", &["get"], handler);
-        let alcazar = AppBuilder::default()
-            .set_addr(get_ipv4_socket_addr())
-            .set_router(router)
-            .start()
-            .unwrap();
+        std::thread::spawn(move || {
+            let router = Router::new().with_endpoint("/", &["get"], handler);
+            let alcazar = AppBuilder::default()
+                .set_addr(get_ipv4_socket_addr())
+                .set_router(router)
+                .start()
+                .unwrap();
 
-        assert_eq!(
-            "127.0.0.1".parse::<IpAddr>().unwrap(),
-            alcazar.local_addr().ip()
-        );
+            assert_eq!(
+                "127.0.0.1".parse::<IpAddr>().unwrap(),
+                alcazar.local_addr().ip()
+            );
+        });
     }
 
     #[test]
     fn add_url_ipv6() {
-        let router = Router::new().with_endpoint("/", &["get"], handler);
-        let alcazar = AppBuilder::default()
-            .set_addr(get_ipv6_socket_addr())
-            .set_router(router)
-            .start()
-            .unwrap();
+        std::thread::spawn(move || {
+            let router = Router::new().with_endpoint("/", &["get"], handler);
+            let alcazar = AppBuilder::default()
+                .set_addr(get_ipv6_socket_addr())
+                .set_router(router)
+                .start()
+                .unwrap();
 
-        assert_eq!("::1".parse::<IpAddr>().unwrap(), alcazar.local_addr().ip());
+            assert_eq!("::1".parse::<IpAddr>().unwrap(), alcazar.local_addr().ip());
+        });
     }
 
     #[test]
     fn add_router() {
-        let router = Router::new().with_endpoint("/", &["get"], handler);
-        let alcazar = AppBuilder::default()
-            .set_addr(get_ipv4_socket_addr())
-            .set_router(router)
-            .start()
-            .unwrap();
+        std::thread::spawn(move || {
+            let router = Router::new().with_endpoint("/", &["get"], handler);
+            AppBuilder::default()
+                .set_addr(get_ipv4_socket_addr())
+                .set_router(router)
+                .start()
+                .unwrap();
+        });
 
-        let mut stream = TcpStream::connect(alcazar.local_addr()).unwrap();
-        stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();
-        stream.flush().unwrap();
+        std::thread::spawn(move || {
+            let mut stream = TcpStream::connect(get_ipv4_socket_addr()).unwrap();
+            stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();
+            stream.flush().unwrap();
 
-        let mut reader = BufReader::new(&stream);
-        let mut buffer = String::new();
+            let mut reader = BufReader::new(&stream);
+            let mut buffer = String::new();
 
-        let _ = reader.read_line(&mut buffer).unwrap();
+            let _ = reader.read_line(&mut buffer).unwrap();
 
-        assert_eq!(buffer, "HTTP/1.1 200 OK\r\n");
+            assert_eq!(buffer, "HTTP/1.1 200 OK\r\n");
+        });
     }
 
     #[test]
     fn try_to_connect_ipv4() {
-        let router = Router::new().with_endpoint("/", &["get"], handler);
-        let alcazar = AppBuilder::default()
-            .set_addr(get_ipv4_socket_addr())
-            .set_router(router)
-            .start()
-            .unwrap();
+        std::thread::spawn(move || {
+            let router = Router::new().with_endpoint("/", &["get"], handler);
+            let alcazar = AppBuilder::default()
+                .set_addr(get_ipv4_socket_addr())
+                .set_router(router)
+                .start()
+                .unwrap();
 
-        TcpStream::connect(alcazar.local_addr()).unwrap();
+            TcpStream::connect(alcazar.local_addr()).unwrap();
+        });
     }
 
     #[test]
     fn try_to_connect_ipv6() {
-        let router = Router::new().with_endpoint("/", &["get"], handler);
-        let alcazar = AppBuilder::default()
-            .set_addr(get_ipv6_socket_addr())
-            .set_router(router)
-            .start()
-            .unwrap();
+        std::thread::spawn(move || {
+            let router = Router::new().with_endpoint("/", &["get"], handler);
+            let alcazar = AppBuilder::default()
+                .set_addr(get_ipv6_socket_addr())
+                .set_router(router)
+                .start()
+                .unwrap();
 
-        TcpStream::connect(alcazar.local_addr()).unwrap();
+            TcpStream::connect(alcazar.local_addr()).unwrap();
+        });
     }
 }

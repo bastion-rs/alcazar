@@ -1,3 +1,5 @@
+#![feature(async_closure)]
+
 pub mod alcazar;
 pub mod error;
 pub mod request;
