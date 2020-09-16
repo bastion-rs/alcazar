@@ -6,10 +6,12 @@ use thiserror::Error;
 // Alias for easier error handling and less boilerplate.
 pub type Result<T> = result::Result<T, AlcazarError>;
 
-#[derive(Error, Debug)]
+struct WrapIOError(Box<IOError>);
+
+#[derive(Error, Debug, Clone)]
 pub enum AlcazarError {
-    #[error(transparent)]
-    IOError(#[from] IOError),
+    #[error("partial content sended: status code 206")]
+    WrapIOError,
     #[error(transparent)]
     HttpError(#[from] HttpError),
     #[error(transparent)]
@@ -17,6 +19,17 @@ pub enum AlcazarError {
     #[error(transparent)]
     RoutingError(#[from] RoutingError),
 }
+
+// impl Display for WrapIOError {
+//     fn fmt(&self, f: &mut Formatter) -> Result {
+//         match *self {
+//             DoubleError::EmptyVec =>
+//                 write!(f, "please use a vector with at least one element"),
+//             // This is a wrapper, so defer to the underlying types' implementation of `fmt`.
+//             DoubleError::Parse(ref e) => e.fmt(f),
+//         }
+//     }
+// }
 
 #[derive(Error, Debug, Clone)]
 pub enum HttpError {

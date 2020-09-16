@@ -9,53 +9,30 @@ use std::{
     fmt::Debug, fmt::Formatter, fmt::Result as FmtResult, future::Future, pin::Pin, str::FromStr,
     sync::Arc,
 sync::Mutex};
+use futures::future::{FutureExt, FutureObj, Shared};
 
 // TODO: Replace String in path for the 'a str type
 // TODO: Mark the structure and methods as pub(crate) later
+#[derive(Clone)]
 pub struct Endpoint {
     pattern: PatternType,
     methods: Vec<MethodType>,
-    handler: Arc<Exec>,
-}
-
-impl Clone for Endpoint {
-    fn clone(&self) -> Self {
-        Self {
-            pattern: self.pattern.clone(),
-            methods: self.methods.clone(),
-            handler: Arc::clone(&self.handler),
-        }
-    }
-}
-
-pub struct Init(pub Box<dyn Fn() -> Exec + Send + Sync>);
-pub struct Exec(pub BoxFuture<'static, Result<StatusCode>>);
-
-impl Init {
-    pub(crate) fn new<C, F>(init: C) -> Self
-    where
-        C: Fn() -> F + Send + 'static + Sync,
-        F: Future<Output = Result<StatusCode>> + Send + 'static + Sync,
-    {
-        let init = Box::new(move || {
-            let fut = init();
-            let exec = Box::pin(fut);
-
-            Exec(exec)
-        });
-
-        Init(init)
-    }
+    handler: Shared<FutureObj<'static, Result<StatusCode>>>,
 }
 
 impl Endpoint {
     // Returns a default initialized endpoint instance.
-    pub fn new(path: &str, methods: Vec<MethodType>, handler: Init) -> Result<Self> {
+    pub fn new<C, F>(path: &str, methods: Vec<MethodType>, handler: C) -> Result<Self>
+    where
+        C: Fn() -> F + Send + 'static,
+        F: Future<Output = Result<StatusCode>> + Send + 'static,
+    {
         let pattern = PatternType::from_str(path)?;
+        let handler = FutureObj::new(Box::new(handler())).shared();
         Ok(Endpoint {
             pattern,
             methods,
-            handler: Arc::new((handler.0)()),
+            handler,
         })
     }
 
@@ -70,7 +47,7 @@ impl Endpoint {
     }
 
     // TODO: Remove this method and call handler instead
-    pub fn handler(&self) -> Arc<Exec> {
+    pub fn handler(&self) -> Shared<FutureObj<'static, Result<StatusCode>>> {
         self.handler.clone()
     }
 }

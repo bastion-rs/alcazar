@@ -38,8 +38,8 @@ impl AppBuilder {
     }
 
     pub fn start(&self) -> Result<App> {
-        let listener = TcpListener::bind(self.addr)?;
-        let local_addr = listener.local_addr()?;
+        let listener = TcpListener::bind(self.addr).expect("unwrap listener");
+        let local_addr = listener.local_addr().expect("unwrap local_addr");
 
         info!("listening to {}", local_addr);
         run(
@@ -57,16 +57,10 @@ pub async fn handle_listener(listener: TcpListener, router: Router) -> Result<()
                 let request = HttpRequest::parse_stream(&stream)?;
                 let endpoint = router.get_endpoint(request.method(), request.path())?;
                 // TODO: Call the endpoint's handler and write the response back
-                let handler = endpoint.handler();
-                // let handler = (*handler).0;
-                let handler = &(*handler.0).await;
-                // let handler = handler.0.await.boxed();
-                // let yo = Box::new((*handler.0).await);
-                // let toto: &Result<StatusCode> = yo;
+                let handler = endpoint.handler().await;
 
-                // let handler = run(handler, ProcStack::default());
-                // stream.write_all(toto.unwrap().into_string_response().as_slice())?;
-                stream.flush()?;
+                stream.write_all(handler.expect("unwrap handler").into_string_response().as_slice()).expect("unwrap write_all");
+                stream.flush().expect("unwrap flush");
             }
             Err(_) => info!("Client connection failed."),
         }

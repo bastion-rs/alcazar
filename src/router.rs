@@ -1,6 +1,5 @@
 use crate::{
     error::{AlcazarError, HttpError, Result},
-    routing::endpoint::Init,
 };
 use crate::{
     routing::endpoint::{Endpoint, MethodType},
@@ -45,7 +44,7 @@ impl Router {
             })
             .filter_map(|method| method.ok())
             .collect();
-        match Endpoint::new(path, acceptable_methods, Init::new(exec)) {
+        match Endpoint::new(path, acceptable_methods, exec) {
             Ok(endpoint) => {
                 self.endpoints.push(endpoint);
             }
