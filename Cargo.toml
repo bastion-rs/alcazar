@@ -32,7 +32,6 @@ url = "2.1.1"
 bastion-executor = { git = "https://github.com/bastion-rs/bastion", branch = "igni/affine_steal_sort" }
 lightproc = "0.3.5"
 futures = "0.3.5"
-futures-locks = "0.6.0"
 
 # Log crates
 tracing = "0.1.19"
