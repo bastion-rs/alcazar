@@ -27,7 +27,8 @@ fn main() {
         let mut stream = TcpStream::connect(SocketAddr::new(
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             8080,
-        )).unwrap();
+        ))
+        .unwrap();
 
         stream.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();
         stream.flush().unwrap();

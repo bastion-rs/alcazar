@@ -1,15 +1,10 @@
-use futures::future::BoxFuture;
-
 use crate::routing::pattern::PatternType;
 use crate::{
     error::{AlcazarError, HttpError, Result},
     status_code::StatusCode,
 };
-use std::{
-    fmt::Debug, fmt::Formatter, fmt::Result as FmtResult, future::Future, pin::Pin, str::FromStr,
-    sync::Arc,
-sync::Mutex};
 use futures::future::{FutureExt, FutureObj, Shared};
+use std::{future::Future, str::FromStr};
 
 // TODO: Replace String in path for the 'a str type
 // TODO: Mark the structure and methods as pub(crate) later

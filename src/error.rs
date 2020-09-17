@@ -18,18 +18,9 @@ pub enum AlcazarError {
     ParseError(#[from] ParseError),
     #[error(transparent)]
     RoutingError(#[from] RoutingError),
+    #[error("client connection failed.")]
+    ClientConnectionFailed,
 }
-
-// impl Display for WrapIOError {
-//     fn fmt(&self, f: &mut Formatter) -> Result {
-//         match *self {
-//             DoubleError::EmptyVec =>
-//                 write!(f, "please use a vector with at least one element"),
-//             // This is a wrapper, so defer to the underlying types' implementation of `fmt`.
-//             DoubleError::Parse(ref e) => e.fmt(f),
-//         }
-//     }
-// }
 
 #[derive(Error, Debug, Clone)]
 pub enum HttpError {

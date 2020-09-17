@@ -1,6 +1,4 @@
-use crate::{
-    error::{AlcazarError, HttpError, Result},
-};
+use crate::error::{AlcazarError, HttpError, Result};
 use crate::{
     routing::endpoint::{Endpoint, MethodType},
     status_code::StatusCode,
