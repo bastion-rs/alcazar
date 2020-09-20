@@ -41,7 +41,6 @@ impl Endpoint {
         &self.methods
     }
 
-    // TODO: Remove this method and call handler instead
     pub fn handler(&self) -> Shared<FutureObj<'static, StatusCode>> {
         self.handler.clone()
     }

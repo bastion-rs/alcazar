@@ -1,17 +1,11 @@
 use crate::error::Result;
 use crate::request::HttpRequest;
 use crate::router::Router;
-
-use std::io::Write;
-use std::{
-    net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener},
-    time::Duration,
-};
-
-use tracing::info;
-
 use bastion_executor::run::run;
 use lightproc::prelude::ProcStack;
+use std::io::Write;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
+use tracing::info;
 
 pub struct AppBuilder {
     addr: SocketAddr,
@@ -45,7 +39,6 @@ impl AppBuilder {
 
         info!("listening to {}", local_addr);
         std::thread::spawn(move || -> Result<()> {
-            std::thread::sleep(Duration::new(1, 0));
             loop {
                 match listener.accept() {
                     Ok((mut stream, _addr)) => {
@@ -57,7 +50,7 @@ impl AppBuilder {
                         stream.write_all(handler.into_bytes_response().as_slice())?;
                         stream.flush()?;
                     }
-                    Err(_) => println!("Client connection failed."),
+                    Err(_) => info!("Client connection failed."),
                 }
             }
         });
@@ -78,10 +71,8 @@ impl App {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::status_code::StatusCode;
-
     use super::*;
+    use crate::status_code::StatusCode;
     use std::io::{BufRead, BufReader};
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream};
 

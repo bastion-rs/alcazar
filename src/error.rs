@@ -1,5 +1,5 @@
 use httparse::Error as HttpParseError;
-use std::io::Error;
+use std::io::Error as IOError;
 use std::result;
 use thiserror::Error;
 
@@ -9,15 +9,13 @@ pub type Result<T> = result::Result<T, AlcazarError>;
 #[derive(Error, Debug)]
 pub enum AlcazarError {
     #[error(transparent)]
-    Error(#[from] Error),
+    IOError(#[from] IOError),
     #[error(transparent)]
     HttpError(#[from] HttpError),
     #[error(transparent)]
     ParseError(#[from] ParseError),
     #[error(transparent)]
     RoutingError(#[from] RoutingError),
-    #[error("client connection failed.")]
-    ClientConnectionFailed,
 }
 
 #[derive(Error, Debug, Clone)]

@@ -28,7 +28,6 @@ impl Router {
         &self.endpoints
     }
 
-    // TODO: Add handler parameter and set it up
     pub fn with_endpoint<C, F>(mut self, path: &str, methods: &[&str], exec: C) -> Self
     where
         C: Fn() -> F + Send + Sync + 'static,
@@ -42,6 +41,7 @@ impl Router {
             })
             .filter_map(|method| method.ok())
             .collect();
+
         match Endpoint::new(path, acceptable_methods, exec) {
             Ok(endpoint) => {
                 self.endpoints.push(endpoint);
