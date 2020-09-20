@@ -39,8 +39,8 @@ impl AppBuilder {
     }
 
     pub fn start(&self) -> Result<App> {
-        let listener = TcpListener::bind(self.addr).expect("unwrap listener");
-        let local_addr = listener.local_addr().expect("unwrap local_addr");
+        let listener = TcpListener::bind(self.addr)?;
+        let local_addr = listener.local_addr()?;
         let router = self.router.clone();
 
         info!("listening to {}", local_addr);
@@ -54,15 +54,8 @@ impl AppBuilder {
                         // TODO: Call the endpoint's handler and write the response back
                         let handler = run(async { endpoint.handler().await }, ProcStack::default());
 
-                        stream
-                            .write_all(
-                                handler
-                                    .expect("unwrap handler")
-                                    .into_string_response()
-                                    .as_slice(),
-                            )
-                            .expect("unwrap write_all");
-                        stream.flush().expect("unwrap flush");
+                        stream.write_all(handler.into_bytes_response().as_slice())?;
+                        stream.flush()?;
                     }
                     Err(_) => println!("Client connection failed."),
                 }
@@ -100,8 +93,8 @@ mod tests {
         SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)), 0)
     }
 
-    async fn handler() -> Result<StatusCode> {
-        Ok(StatusCode::Ok)
+    async fn handler() -> StatusCode {
+        StatusCode::Ok
     }
 
     #[test]
@@ -111,10 +104,10 @@ mod tests {
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
             .start()
-            .unwrap();
+            .expect("unwrap appbuilder");
 
         assert_eq!(
-            "127.0.0.1".parse::<IpAddr>().unwrap(),
+            "127.0.0.1".parse::<IpAddr>().expect("unwrap parse IpAddr"),
             alcazar.local_addr().ip()
         );
     }
@@ -126,9 +119,12 @@ mod tests {
             .set_addr(get_ipv6_socket_addr())
             .set_router(router)
             .start()
-            .unwrap();
+            .expect("unwrap appbuilder");
 
-        assert_eq!("::1".parse::<IpAddr>().unwrap(), alcazar.local_addr().ip());
+        assert_eq!(
+            "::1".parse::<IpAddr>().expect("unwrap parse IpAddr"),
+            alcazar.local_addr().ip()
+        );
     }
 
     #[test]
@@ -163,9 +159,9 @@ mod tests {
             .set_addr(get_ipv4_socket_addr())
             .set_router(router)
             .start()
-            .unwrap();
+            .expect("unwrap appbuilder");
 
-        TcpStream::connect(alcazar.local_addr()).unwrap();
+        TcpStream::connect(alcazar.local_addr()).expect("unwrap connect");
     }
 
     #[test]
@@ -175,8 +171,8 @@ mod tests {
             .set_addr(get_ipv6_socket_addr())
             .set_router(router)
             .start()
-            .unwrap();
+            .expect("unwrap appbuilder");
 
-        TcpStream::connect(alcazar.local_addr()).unwrap();
+        TcpStream::connect(alcazar.local_addr()).expect("unwrap connect");
     }
 }

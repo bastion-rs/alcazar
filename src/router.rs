@@ -32,7 +32,7 @@ impl Router {
     pub fn with_endpoint<C, F>(mut self, path: &str, methods: &[&str], exec: C) -> Self
     where
         C: Fn() -> F + Send + Sync + 'static,
-        F: Future<Output = Result<StatusCode>> + Send + Sync + 'static,
+        F: Future<Output = StatusCode> + Send + Sync + 'static,
     {
         let acceptable_methods = methods
             .iter()

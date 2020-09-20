@@ -63,7 +63,7 @@ pub enum StatusCode {
 }
 
 impl StatusCode {
-    pub fn into_string_response(self) -> Vec<u8> {
+    pub fn into_bytes_response(self) -> Vec<u8> {
         let code: u16 = self.into();
         let string = format!("HTTP/1.1 {} OK\r\n", code);
         string.into_bytes()

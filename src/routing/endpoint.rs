@@ -12,7 +12,7 @@ use std::{future::Future, str::FromStr};
 pub struct Endpoint {
     pattern: PatternType,
     methods: Vec<MethodType>,
-    handler: Shared<FutureObj<'static, Result<StatusCode>>>,
+    handler: Shared<FutureObj<'static, StatusCode>>,
 }
 
 impl Endpoint {
@@ -20,7 +20,7 @@ impl Endpoint {
     pub fn new<C, F>(path: &str, methods: Vec<MethodType>, handler: C) -> Result<Self>
     where
         C: Fn() -> F + Send + 'static,
-        F: Future<Output = Result<StatusCode>> + Send + 'static,
+        F: Future<Output = StatusCode> + Send + 'static,
     {
         let pattern = PatternType::from_str(path)?;
         let handler = FutureObj::new(Box::new(handler())).shared();
@@ -42,7 +42,7 @@ impl Endpoint {
     }
 
     // TODO: Remove this method and call handler instead
-    pub fn handler(&self) -> Shared<FutureObj<'static, Result<StatusCode>>> {
+    pub fn handler(&self) -> Shared<FutureObj<'static, StatusCode>> {
         self.handler.clone()
     }
 }

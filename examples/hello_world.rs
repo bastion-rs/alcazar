@@ -1,13 +1,13 @@
 use alcazar::prelude::*;
-use alcazar::{error::Result, status_code::StatusCode};
+use alcazar::status_code::StatusCode;
 use std::{
     io::{BufRead, BufReader, Write},
     net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
 };
 use std::{thread::park_timeout, time::Duration};
 
-async fn handler() -> Result<StatusCode> {
-    Ok(StatusCode::Ok)
+async fn handler() -> StatusCode {
+    StatusCode::Ok
 }
 
 fn main() {

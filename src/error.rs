@@ -1,17 +1,15 @@
 use httparse::Error as HttpParseError;
-use std::io::Error as IOError;
+use std::io::Error;
 use std::result;
 use thiserror::Error;
 
 // Alias for easier error handling and less boilerplate.
 pub type Result<T> = result::Result<T, AlcazarError>;
 
-struct WrapIOError(Box<IOError>);
-
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug)]
 pub enum AlcazarError {
-    #[error("partial content sended: status code 206")]
-    WrapIOError,
+    #[error(transparent)]
+    Error(#[from] Error),
     #[error(transparent)]
     HttpError(#[from] HttpError),
     #[error(transparent)]
