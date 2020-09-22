@@ -1,12 +1,17 @@
 use alcazar::prelude::*;
+use alcazar::status_code::StatusCode;
 use std::{
     io::{BufRead, BufReader, Write},
     net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
 };
 use std::{thread::park_timeout, time::Duration};
 
+async fn handler() -> StatusCode {
+    StatusCode::Ok
+}
+
 fn main() {
-    let router = Router::new().with_endpoint("/", &["get"]);
+    let router = Router::new().with_endpoint("/", &["get"], handler);
     let alcazar = AppBuilder::default()
         .set_addr(SocketAddr::new(
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),

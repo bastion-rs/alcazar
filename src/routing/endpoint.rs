@@ -1,7 +1,10 @@
-use crate::error::{AlcazarError, HttpError, Result};
-use crate::request::HttpRequest;
 use crate::routing::pattern::PatternType;
-use std::str::FromStr;
+use crate::{
+    error::{AlcazarError, HttpError, Result},
+    status_code::StatusCode,
+};
+use futures::future::{FutureExt, FutureObj, Shared};
+use std::{future::Future, str::FromStr};
 
 // TODO: Replace String in path for the 'a str type
 // TODO: Mark the structure and methods as pub(crate) later
@@ -9,13 +12,23 @@ use std::str::FromStr;
 pub struct Endpoint {
     pattern: PatternType,
     methods: Vec<MethodType>,
+    handler: Shared<FutureObj<'static, StatusCode>>,
 }
 
 impl Endpoint {
     // Returns a default initialized endpoint instance.
-    pub fn new(path: &str, methods: Vec<MethodType>) -> Result<Self> {
+    pub fn new<C, F>(path: &str, methods: Vec<MethodType>, handler: C) -> Result<Self>
+    where
+        C: Fn() -> F + Send + 'static,
+        F: Future<Output = StatusCode> + Send + 'static,
+    {
         let pattern = PatternType::from_str(path)?;
-        Ok(Endpoint { pattern, methods })
+        let handler = FutureObj::new(Box::new(handler())).shared();
+        Ok(Endpoint {
+            pattern,
+            methods,
+            handler,
+        })
     }
 
     // Returns a pattern against which can be checked match.
@@ -28,9 +41,8 @@ impl Endpoint {
         &self.methods
     }
 
-    // TODO: Remove this method and call handler instead
-    pub fn get_response(&self, _request: &HttpRequest) -> &'static str {
-        "HTTP/1.1 200 OK\r\n\r\n"
+    pub fn handler(&self) -> Shared<FutureObj<'static, StatusCode>> {
+        self.handler.clone()
     }
 }
 
