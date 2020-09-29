@@ -1,6 +1,6 @@
-use crate::{error::Result, middleware::Middleware, middleware::ProcessStrategy};
 use crate::request::HttpRequest;
 use crate::router::Router;
+use crate::{error::Result, middleware::Middleware, middleware::ProcessStrategy};
 use bastion_executor::run::run;
 use lightproc::prelude::ProcStack;
 use std::io::Write;
@@ -10,7 +10,7 @@ use tracing::info;
 pub struct AppBuilder {
     addr: SocketAddr,
     router: Router,
-    middlewares: Vec<Middleware>
+    middlewares: Vec<Middleware>,
 }
 
 impl Default for AppBuilder {
@@ -18,7 +18,7 @@ impl Default for AppBuilder {
         Self {
             addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0),
             router: Router::default(),
-            middlewares: Vec::new()
+            middlewares: Vec::new(),
         }
     }
 }
@@ -53,11 +53,17 @@ impl AppBuilder {
                         let request = HttpRequest::parse_stream(&stream)?;
                         let endpoint = router.get_endpoint(request.method(), request.path())?;
                         for middleware in &middlewares {
-                            run(async { middleware.process(ProcessStrategy::Before).await }, ProcStack::default())?;
+                            run(
+                                async { middleware.process(ProcessStrategy::Before).await },
+                                ProcStack::default(),
+                            )?;
                         }
                         let handler = run(async { endpoint.handler().await }, ProcStack::default());
                         for middleware in &middlewares {
-                            run(async { middleware.process(ProcessStrategy::After).await }, ProcStack::default())?;
+                            run(
+                                async { middleware.process(ProcessStrategy::After).await },
+                                ProcStack::default(),
+                            )?;
                         }
                         stream.write_all(handler.into_bytes_response().as_slice())?;
                         stream.flush()?;

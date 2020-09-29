@@ -1,10 +1,10 @@
 pub mod alcazar;
 pub mod error;
+pub mod middleware;
 pub mod request;
 pub mod router;
 pub mod routing;
 pub mod status_code;
-pub mod middleware;
 
 pub mod prelude {
     pub use crate::alcazar::{App, AppBuilder};

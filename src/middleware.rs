@@ -5,7 +5,7 @@ use std::future::Future;
 #[derive(Clone)]
 pub enum ProcessStrategy {
     Before,
-    After
+    After,
 }
 
 #[derive(Clone)]
@@ -23,7 +23,7 @@ impl Middleware {
         let process = FutureObj::new(Box::new(process())).shared();
         Middleware {
             process_strategy,
-            process
+            process,
         }
     }
 
@@ -32,8 +32,8 @@ impl Middleware {
             ProcessStrategy::After => {
                 self.process.clone().await?;
                 Ok(())
-            },
-            ProcessStrategy::Before => Err(MiddlewareError::BadProcessStrategy)
+            }
+            ProcessStrategy::Before => Err(MiddlewareError::BadProcessStrategy),
         }
     }
 }

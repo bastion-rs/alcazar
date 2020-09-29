@@ -52,5 +52,5 @@ pub enum RoutingError {
 #[derive(Error, Debug, Clone)]
 pub enum MiddlewareError {
     #[error("bad process startegy")]
-    BadProcessStrategy
+    BadProcessStrategy,
 }
