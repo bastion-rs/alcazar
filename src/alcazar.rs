@@ -1,6 +1,6 @@
-use crate::error::Result;
 use crate::request::HttpRequest;
 use crate::router::Router;
+use crate::{error::Result, middleware::Middleware, middleware::ProcessStrategy};
 use bastion_executor::run::run;
 use lightproc::prelude::ProcStack;
 use std::io::Write;
@@ -10,6 +10,7 @@ use tracing::info;
 pub struct AppBuilder {
     addr: SocketAddr,
     router: Router,
+    middlewares: Vec<Middleware>,
 }
 
 impl Default for AppBuilder {
@@ -17,6 +18,7 @@ impl Default for AppBuilder {
         Self {
             addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0),
             router: Router::default(),
+            middlewares: Vec::new(),
         }
     }
 }
@@ -32,10 +34,16 @@ impl AppBuilder {
         self
     }
 
+    pub fn set_middlewares(&mut self, middlewares: Vec<Middleware>) -> &mut Self {
+        self.middlewares = middlewares;
+        self
+    }
+
     pub fn start(&self) -> Result<App> {
         let listener = TcpListener::bind(self.addr)?;
         let local_addr = listener.local_addr()?;
         let router = self.router.clone();
+        let middlewares = self.middlewares.clone();
 
         info!("listening to {}", local_addr);
         std::thread::spawn(move || -> Result<()> {
@@ -44,9 +52,19 @@ impl AppBuilder {
                     Ok((mut stream, _addr)) => {
                         let request = HttpRequest::parse_stream(&stream)?;
                         let endpoint = router.get_endpoint(request.method(), request.path())?;
-                        // TODO: Call the endpoint's handler and write the response back
+                        for middleware in &middlewares {
+                            run(
+                                async { middleware.process(ProcessStrategy::Before).await },
+                                ProcStack::default(),
+                            )?;
+                        }
                         let handler = run(async { endpoint.handler().await }, ProcStack::default());
-
+                        for middleware in &middlewares {
+                            run(
+                                async { middleware.process(ProcessStrategy::After).await },
+                                ProcStack::default(),
+                            )?;
+                        }
                         stream.write_all(handler.into_bytes_response().as_slice())?;
                         stream.flush()?;
                     }

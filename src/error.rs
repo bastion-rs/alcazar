@@ -3,8 +3,9 @@ use std::io::Error as IOError;
 use std::result;
 use thiserror::Error;
 
-// Alias for easier error handling and less boilerplate.
+// Aliases for easier error handling and less boilerplate.
 pub type Result<T> = result::Result<T, AlcazarError>;
+pub type MiddlewareResult<T> = result::Result<T, MiddlewareError>;
 
 #[derive(Error, Debug)]
 pub enum AlcazarError {
@@ -16,6 +17,8 @@ pub enum AlcazarError {
     ParseError(#[from] ParseError),
     #[error(transparent)]
     RoutingError(#[from] RoutingError),
+    #[error(transparent)]
+    MiddlewareError(#[from] MiddlewareError),
 }
 
 #[derive(Error, Debug, Clone)]
@@ -44,4 +47,10 @@ pub enum RoutingError {
     InvalidPathError { part: String, path: String },
     #[error("can't compile {0} regex for the given path.")]
     RegexCompileError(String),
+}
+
+#[derive(Error, Debug, Clone)]
+pub enum MiddlewareError {
+    #[error("bad process startegy")]
+    BadProcessStrategy,
 }

@@ -1,5 +1,6 @@
 pub mod alcazar;
 pub mod error;
+pub mod middleware;
 pub mod request;
 pub mod router;
 pub mod routing;
