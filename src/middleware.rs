@@ -1,4 +1,4 @@
-use crate::error::{MiddlewareError, MiddlewareResult};
+use crate::error::MiddlewareResult;
 use futures::future::{FutureExt, FutureObj, Shared};
 use std::future::Future;
 
@@ -29,11 +29,20 @@ impl Middleware {
 
     pub async fn process(&self, process_strategy: ProcessStrategy) -> MiddlewareResult<()> {
         match process_strategy {
-            ProcessStrategy::After => {
-                self.process.clone().await?;
-                Ok(())
-            }
-            ProcessStrategy::Before => Err(MiddlewareError::BadProcessStrategy),
+            ProcessStrategy::Before => match self.process_strategy {
+                ProcessStrategy::Before => {
+                    self.process.clone().await?;
+                    Ok(())
+                }
+                ProcessStrategy::After => Ok(()),
+            },
+            ProcessStrategy::After => match self.process_strategy {
+                ProcessStrategy::Before => Ok(()),
+                ProcessStrategy::After => {
+                    self.process.clone().await?;
+                    Ok(())
+                }
+            },
         }
     }
 }
